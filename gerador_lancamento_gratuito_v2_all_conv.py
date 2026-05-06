@@ -19,6 +19,7 @@ from pathlib import Path
 # ══════════════════════════════════════════════════════
 # CONFIG
 # ══════════════════════════════════════════════════════
+
 SHEET_ID         = "123BTZsKUfkYrRHSWgWCh3a6DsYZG6tl2x16QZNlpTXw"
 TEMPLATE_FILE    = "dashboard_lancamento_gratuito_v2_all_conv.html"
 OUTPUT_FILE      = "index.html"
@@ -208,10 +209,21 @@ def meta_tables_period(df, p, img_dir):
 
 def meta_tables(df, img_dir):
     hoje=pd.Timestamp(date.today())
+    ontem=hoje-pd.Timedelta(days=1)
     result={"lct":{},"all":{}}
+    period_ranges={
+        "1":  (ontem, ontem),
+        "7":  (hoje-pd.Timedelta(days=6), hoje),
+        "14": (hoje-pd.Timedelta(days=13), hoje),
+        "30": (hoje-pd.Timedelta(days=29), hoje),
+        "all": (None, None),
+    }
     for key,subset in [("lct",df[df["is_lct"]]),("all",df)]:
-        for pname,n in [("1",1),("7",7),("14",14),("30",30),("all",0)]:
-            p=subset[subset["date"]>=hoje-pd.Timedelta(days=n-1)] if n>0 else subset
+        for pname,(start,end) in period_ranges.items():
+            if start is None:
+                p=subset
+            else:
+                p=subset[(subset["date"]>=start)&(subset["date"]<=end)]
             result[key][pname]=meta_tables_period(df,p,img_dir)
             print(f"     [{key}][{pname}]: {len(result[key][pname]['camps'])} camps | {len(result[key][pname]['ads'])} ads")
     return result
@@ -239,7 +251,7 @@ def meta_breakdowns(df):
         # Soma das colunas disponíveis — inclui FB Pixel Custom se existir na aba
         available=[c for c in CONV_COLS_BD if c in df_ga.columns]
         print(f"     GA colunas de conv: {available}")
-        df_ga["leads"]=sum(to_num(df_ga[c]) for c in available)
+        df_ga["leads"]=sum(to_num(df_ga[c]) for c in available) if available else pd.Series(0, index=df_ga.index)
         df_ga["age"]=df_ga["Age (Breakdown)"].astype(str)
         df_ga["gender"]=df_ga["Gender (Breakdown)"].astype(str)
         if "Campaign Name" in df_ga.columns and LANCAMENTO_COD:
@@ -255,7 +267,7 @@ def meta_breakdowns(df):
         # Soma das colunas disponíveis — inclui FB Pixel Custom se existir na aba
         available_pt=[c for c in CONV_COLS_BD if c in df_pt.columns]
         print(f"     PT colunas de conv: {available_pt}")
-        df_pt["leads"]=sum(to_num(df_pt[c]) for c in available_pt)
+        df_pt["leads"]=sum(to_num(df_pt[c]) for c in available_pt) if available_pt else pd.Series(0, index=df_pt.index)
         df_pt["platform"]=df_pt["Platform Position (Breakdown)"].astype(str)
         if "Campaign Name" in df_pt.columns and LANCAMENTO_COD:
             df_pt["is_lct"]=df_pt["Campaign Name"].str.contains(LANCAMENTO_COD,na=False,case=False)
@@ -391,9 +403,13 @@ def main():
     print(f"  ✓ {total_leads} leads | R$ {m_k['lct']['spend']:,.2f} invest.")
 
     print("\n[PESQUISA]")
-    df_pes=load_pesquisa()
-    pes=pesquisa_process(df_pes, total_leads)
-    print(f"  ✓ {pes['total']} respostas")
+    if USAR_PESQUISA:
+        df_pes=load_pesquisa()
+        pes=pesquisa_process(df_pes, total_leads)
+        print(f"  ✓ {pes['total']} respostas")
+    else:
+        pes=None
+        print("  (desativada)")
 
     print("\n[HTML]")
     if not Path(TEMPLATE_FILE).exists():
