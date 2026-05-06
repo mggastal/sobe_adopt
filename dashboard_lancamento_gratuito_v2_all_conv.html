@@ -24,12 +24,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .logo-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;}
 .logo-sub{font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1.5px;}
 .sb-nav{padding:10px 8px;flex:1;}
-.sb-platform-group{padding:4px 4px 0;margin-bottom:6px;}
+.sb-platform-group{padding:4px 4px 0;}
 .sb-platform-hd{display:flex;align-items:center;gap:8px;padding:6px 10px 4px;margin-bottom:2px;}
 .sb-platform-icon{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;flex-shrink:0;}
-.sb-platform-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1.5px;}
-.sb-sub{padding-left:32px!important;font-size:11px!important;color:rgba(255,255,255,.35)!important;}
-.sb-sub.active{color:#fff!important;background:rgba(255,255,255,.1)!important;}
+.sb-platform-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:1.5px;}
+.sb-dot{width:5px;height:5px;border-radius:50%;margin-left:auto;}
+.sb-section{padding:8px 0 4px;}
 .sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8);}
 .sb-item.active{background:rgba(255,255,255,.1);color:#fff;}
 .sb-item .ico{font-size:13px;width:18px;text-align:center;}
@@ -212,37 +212,32 @@ details.desk-only{display:block!important;}
     <div class="logo-box" id="logoBox">C</div>
     <div><div class="logo-name" id="sbNome">Dashboard</div></div>
   </div>
-  <nav class="sb-nav">
-
+  <div class="sb-section">
     <div class="sb-platform-group">
       <div class="sb-platform-hd">
         <div class="sb-platform-icon" style="background:linear-gradient(135deg,#1877f2,#42a5f5)">f</div>
         <span class="sb-platform-lbl">Meta Ads</span>
       </div>
-      <button class="sb-item sb-sub active" id="sbMeta" onclick="goPage('meta',this)">Geral</button>
-      <button class="sb-item sb-sub" id="sbDiario" onclick="goPage('diario',this)">Métricas Diárias</button>
+      <a href="#" class="sb-item active" id="sbMeta" onclick="goPage('meta',this);return false;"><span class="ico">📋</span>Geral</a>
+      <a href="#" class="sb-item" id="sbDiario" onclick="goPage('diario',this);return false;"><span class="ico">📊</span>Métricas Diárias<span class="sb-dot" style="background:#1877f2"></span></a>
     </div>
-
-    <div class="sb-platform-group">
+    <div class="sb-platform-group" style="margin-top:8px">
       <div class="sb-platform-hd">
         <div class="sb-platform-icon" style="background:linear-gradient(135deg,#fbbc04,#ea4335)">G</div>
         <span class="sb-platform-lbl">Google Ads</span>
       </div>
-      <button class="sb-item sb-sub" id="sbGoogle" onclick="goPage('google',this)">Geral</button>
+      <a href="#" class="sb-item" id="sbGoogle" onclick="goPage('google',this);return false;"><span class="ico">📋</span>Geral</a>
     </div>
-
-    <div class="sb-platform-group">
+    <div class="sb-platform-group" style="margin-top:8px">
       <div class="sb-platform-hd">
         <div class="sb-platform-icon" style="background:linear-gradient(135deg,#059669,#34d399)">S</div>
         <span class="sb-platform-lbl">SEO</span>
       </div>
-      <button class="sb-item sb-sub" id="sbSeo" onclick="goPage('seo',this)">Visão Geral</button>
+      <a href="#" class="sb-item" id="sbSeo" onclick="goPage('seo',this);return false;"><span class="ico">📊</span>Visão Geral</a>
     </div>
-
-    <button class="sb-item" id="sbPesquisa" onclick="goPage('pesquisa',this)">Pesquisa</button>
-
-  </nav>
+  </div>
   <div class="sb-footer"><span id="sbAtual">--/--/---- · via planilha</span></div>
+  <a href="#" class="sb-item" id="sbPesquisa" style="margin:0 10px 8px" onclick="goPage('pesquisa',this);return false;"><span class="ico">💬</span>Pesquisa</a>
 </aside>
 
 <main class="main">
@@ -1554,10 +1549,10 @@ function toggleGCamp(cid, camp){
   sub.style.display=open?'table-row':'none';
   if(arr) arr.textContent=open?'▼':'▶';
   if(!open) return;
-  const key=getPeriodKey()||'all';
-  const MATCH_ICON={'EXACT':'[E]','PHRASE':'"F"','BROAD':'~A~'};
-  const cpaCls=v=>!v?'cn':v<=10?'cg':v<=30?'cw2':'cr';
+  const fD=v=>(v==null||isNaN(v))?'—':'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   const fConv=v=>v==null?'—':fN(Math.round(v));
+  const cpaCls=v=>!v?'cn':v<=10?'cg':v<=30?'cw2':'cr';
+  const MATCH_ICON={'EXACT':'[E]','PHRASE':'"F"','BROAD':'~A~'};
   const inner=document.getElementById('sub_'+cid);
   if(!camp.adgroups?.length){inner.innerHTML='<div style="padding:8px;color:var(--muted);font-size:11px">Sem grupos</div>';return;}
   inner.innerHTML='<div style="font-size:10px;color:var(--muted2);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Grupos de Anúncio — '+camp.n+'</div>'+
@@ -1761,20 +1756,12 @@ function rerenderActive(){
 }
 
 // ═══ NAVEGAÇÃO ═══
-function toggleGroup(grpId, hdEl){
-  const body=document.getElementById(grpId);
-  if(!body) return;
-  const open=body.classList.toggle('open');
-  hdEl.classList.toggle('collapsed',!open);
-}
-
 function goPage(p,btn){
   document.querySelectorAll('.page-section').forEach(e=>e.classList.remove('active'));
-  // Remover active só dos subitens (.sb-sub), não dos cabeçalhos de grupo
   document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
   document.getElementById('page-'+p)?.classList.add('active');
   if(btn) btn.classList.add('active');
-  const titles={meta:'Meta Ads — Geral',diario:'Meta Ads — Métricas Diárias',google:'Google Ads',seo:'SEO',pesquisa:'Pesquisa'};
+  const titles={meta:'Meta Ads — Geral',diario:'Métricas Diárias',google:'Google Ads',seo:'SEO',pesquisa:'Pesquisa'};
   document.getElementById('pageTitle').textContent=titles[p]||p;
   if(p==='meta')     renderMeta();
   if(p==='diario')   renderDiario();
