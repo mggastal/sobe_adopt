@@ -219,8 +219,8 @@ details.desk-only{display:block!important;}
         <div class="sb-platform-icon" style="background:linear-gradient(135deg,#1877f2,#42a5f5)">f</div>
         <span class="sb-platform-lbl">Meta Ads</span>
       </div>
-      <button class="sb-item sb-sub active" id="sbMeta" onclick="goPage('meta',this)"><span class="ico">📋</span>Geral</button>
-      <button class="sb-item sb-sub" id="sbDiario" onclick="goPage('diario',this)"><span class="ico">📈</span>Métricas Diárias</button>
+      <button class="sb-item sb-sub active" id="sbMeta" onclick="goPage('meta',this)">Geral</button>
+      <button class="sb-item sb-sub" id="sbDiario" onclick="goPage('diario',this)">Métricas Diárias</button>
     </div>
 
     <div class="sb-platform-group">
@@ -228,7 +228,7 @@ details.desk-only{display:block!important;}
         <div class="sb-platform-icon" style="background:linear-gradient(135deg,#fbbc04,#ea4335)">G</div>
         <span class="sb-platform-lbl">Google Ads</span>
       </div>
-      <button class="sb-item sb-sub" id="sbGoogle" onclick="goPage('google',this)"><span class="ico">📋</span>Geral</button>
+      <button class="sb-item sb-sub" id="sbGoogle" onclick="goPage('google',this)">Geral</button>
     </div>
 
     <div class="sb-platform-group">
@@ -236,10 +236,10 @@ details.desk-only{display:block!important;}
         <div class="sb-platform-icon" style="background:linear-gradient(135deg,#059669,#34d399)">S</div>
         <span class="sb-platform-lbl">SEO</span>
       </div>
-      <button class="sb-item sb-sub" id="sbSeo" onclick="goPage('seo',this)"><span class="ico">📊</span>Visão Geral</button>
+      <button class="sb-item sb-sub" id="sbSeo" onclick="goPage('seo',this)">Visão Geral</button>
     </div>
 
-    <button class="sb-item" id="sbPesquisa" onclick="goPage('pesquisa',this)"><span class="ico">💬</span>Pesquisa</button>
+    <button class="sb-item" id="sbPesquisa" onclick="goPage('pesquisa',this)">Pesquisa</button>
 
   </nav>
   <div class="sb-footer"><span id="sbAtual">--/--/---- · via planilha</span></div>
@@ -1424,13 +1424,15 @@ function renderGoogle(){
   const cpaCls=v=>!v?'cn':v<=10?'cg':v<=30?'cw2':'cr';
   // Conversões sempre inteiras
   const fConv=v=>v==null?'—':fN(Math.round(v));
+  // Dólar — usado em todo o Google Ads
+  const fD=v=>(v==null||isNaN(v))?'—':'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   // KPIs
   document.getElementById('gKpis').innerHTML=`
-    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="font-size:16px;color:var(--text)">${fR(gk.spend)}</div><div class="kpi-sub">Google Ads</div></div>
+    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="font-size:16px;color:var(--text)">${fD(gk.spend)}</div><div class="kpi-sub">Google Ads</div></div>
     <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Conversões</div><div class="kpi-val" style="color:var(--text)">${fConv(gk.conversions)}</div><div class="kpi-sub">All Conversions</div></div>
     <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--text)">${fN(gk.clicks)}</div><div class="kpi-sub">CTR: ${fP(gk.ctr)}</div></div>
-    <div class="kpi" style="--kc:${cpaCls(gk.cpa)==='cg'?'#059669':cpaCls(gk.cpa)==='cw2'?'#d97706':'#dc2626'}"><div class="kpi-lbl">CPA</div><div class="kpi-val ${cpaCls(gk.cpa)}">${fR(gk.cpa)}</div><div class="kpi-sub">CPC: ${fR(gk.cpc)}</div></div>`;
+    <div class="kpi" style="--kc:${cpaCls(gk.cpa)==='cg'?'#059669':cpaCls(gk.cpa)==='cw2'?'#d97706':'#dc2626'}"><div class="kpi-lbl">CPA</div><div class="kpi-val ${cpaCls(gk.cpa)}">${fD(gk.cpa)}</div><div class="kpi-sub">CPC: ${fD(gk.cpc)}</div></div>`;
 
   // Gráfico — filtrado pelo período selecionado
   const gd=applyPeriod(GOOGLE_DAILY); dc('chGoogle');
@@ -1442,13 +1444,13 @@ function renderGoogle(){
          datalabels:{...makeDatalabels('#ca8a04','',v=>v!=null?fN(v):null),display:ctx=>showLabels}},
         {label:'Invest.',data:gd.spend,borderColor:'#059669',backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,type:'line',spanGaps:true,datalabels:{display:false}},
         {label:'CPA',data:gd.cpa,borderColor:'#111',borderDash:[5,3],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:1.5,type:'line',yAxisID:'y2',spanGaps:true,
-         datalabels:{display:ctx=>showLabels,color:'#333',font:{size:labelSize,weight:'bold'},formatter:v=>v!=null?'R$'+v.toFixed(2):null,anchor:'end',align:'top',offset:2,clip:false}},
+         datalabels:{display:ctx=>showLabels,color:'#333',font:{size:labelSize,weight:'bold'},formatter:v=>v!=null?'$'+v.toFixed(2):null,anchor:'end',align:'top',offset:2,clip:false}},
       ]},
       options:{...bo(),scales:{
         x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},
-        y:{ticks:{color:TXT(),font:bf,callback:v=>'R$'+v.toLocaleString()},grid:{color:GRID()},min:0},
+        y:{ticks:{color:TXT(),font:bf,callback:v=>'$'+v.toLocaleString('en-US')},grid:{color:GRID()},min:0},
         y1:{position:'right',ticks:{color:'#ca8a04',font:bf},grid:{display:false},grace:'20%'},
-        y2:{position:'right',ticks:{color:'#555',font:bf,callback:v=>'R$'+v.toFixed(0)},grid:{display:false},offset:true,min:0},
+        y2:{position:'right',ticks:{color:'#555',font:bf,callback:v=>'$'+v.toFixed(0)},grid:{display:false},offset:true,min:0},
       }}
     });
   }
@@ -1481,13 +1483,13 @@ function renderGoogle(){
       tr.innerHTML=`
         <td style="width:20px;text-align:center;color:var(--muted2);font-size:11px" id="arr_${cid}">▶</td>
         <td style="font-size:11px;padding:7px 10px;font-weight:600;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.n}">${c.n}</td>
-        <td class="num" style="font-size:11px;padding:7px 10px">${fR(c.spend)}</td>
+        <td class="num" style="font-size:11px;padding:7px 10px">${fD(c.spend)}</td>
         <td class="num" style="font-size:11px;padding:7px 10px;font-weight:700">${fConv(c.conv)}</td>
         <td class="num" style="font-size:11px;padding:7px 10px">${fN(c.clicks)}</td>
         <td class="num" style="font-size:11px;padding:7px 10px;color:var(--muted2)">${fN(c.imp)}</td>
         <td class="num" style="font-size:11px;padding:7px 10px">${fP(c.ctr)}</td>
-        <td class="num" style="font-size:11px;padding:7px 10px">${fR(c.cpc)}</td>
-        <td class="num ${cpaCls(c.cpa)}" style="font-size:11px;padding:7px 10px">${fR(c.cpa)}</td>`;
+        <td class="num" style="font-size:11px;padding:7px 10px">${fD(c.cpc)}</td>
+        <td class="num ${cpaCls(c.cpa)}" style="font-size:11px;padding:7px 10px">${fD(c.cpa)}</td>`;
       tbody.appendChild(tr);
       const subTr=document.createElement('tr');
       subTr.id=cid; subTr.style.display='none';
@@ -1507,6 +1509,7 @@ function renderGoogle(){
         <th style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Match</th>
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Invest.</th>
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Conv.</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CTR</th>
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Cliques</th>
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CPC</th>
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CPA</th>
@@ -1516,11 +1519,12 @@ function renderGoogle(){
         return `<tr>
           <td style="font-size:11px;padding:6px 10px;font-weight:600">${k.n}</td>
           <td style="font-size:10px;padding:6px 10px;text-align:center"><span style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:9px;font-family:monospace;color:var(--muted)">${mi}</span></td>
-          <td class="num" style="font-size:11px;padding:6px 10px">${fR(k.spend)}</td>
+          <td class="num" style="font-size:11px;padding:6px 10px">${fD(k.spend)}</td>
           <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700">${fConv(k.conv)}</td>
+          <td class="num" style="font-size:11px;padding:6px 10px">${fP(k.ctr)}</td>
           <td class="num" style="font-size:11px;padding:6px 10px">${fN(k.clicks)}</td>
-          <td class="num" style="font-size:11px;padding:6px 10px">${fR(k.cpc)}</td>
-          <td class="num ${cpaCls(k.cpa)}" style="font-size:11px;padding:6px 10px">${fR(k.cpa)}</td>
+          <td class="num" style="font-size:11px;padding:6px 10px">${fD(k.cpc)}</td>
+          <td class="num ${cpaCls(k.cpa)}" style="font-size:11px;padding:6px 10px">${fD(k.cpa)}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
@@ -1534,9 +1538,9 @@ function renderGoogle(){
     el.innerHTML=`<table><thead><tr><th>${lbl}</th><th class="num">Invest.</th><th class="num">Conv.</th><th class="num">CPA</th></tr></thead>
       <tbody>${data.map(r=>`<tr>
         <td style="font-size:11px">${r.n}</td>
-        <td class="num">${fR(r.spend)}</td>
+        <td class="num">${fD(r.spend)}</td>
         <td class="num">${fConv(r.conv)}</td>
-        <td class="num ${cpaCls(r.cpl)}">${fR(r.cpl)}</td>
+        <td class="num ${cpaCls(r.cpl)}">${fD(r.cpl)}</td>
       </tr>`).join('')}</tbody></table>`;
   }
   gSegTable('gGender', gbd.gender, 'Gênero');
@@ -1563,10 +1567,10 @@ function toggleGCamp(cid, camp){
         <div onclick="toggleGAdgroup('${agid}',this)" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--border)">
           <span id="arr_${agid}" style="color:var(--muted2);font-size:10px">▶</span>
           <span style="font-size:11px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ag.n}</span>
-          <span style="font-size:10px;color:var(--muted2)">${fR(ag.spend)}</span>
+          <span style="font-size:10px;color:var(--muted2)">${fD(ag.spend)}</span>
           <span style="font-size:10px;font-weight:700">${fConv(ag.conv)} conv.</span>
-          <span style="font-size:10px;color:var(--muted2)">CPC ${fR(ag.cpc)}</span>
-          <span class="num ${cpaCls(ag.cpa)}" style="font-size:10px">${fR(ag.cpa)} CPA</span>
+          <span style="font-size:10px;color:var(--muted2)">CPC ${fD(ag.cpc)}</span>
+          <span class="num ${cpaCls(ag.cpa)}" style="font-size:10px">${fD(ag.cpa)} CPA</span>
         </div>
         <div id="${agid}" style="display:none;padding:4px 0 4px 16px">
           ${!ag.keywords?.length?'<div style="padding:6px;color:var(--muted);font-size:11px">Sem palavras-chave</div>':
@@ -1585,11 +1589,11 @@ function toggleGCamp(cid, camp){
                 return `<tr>
                   <td style="padding:4px 8px;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${k.n}</td>
                   <td style="padding:4px 8px;text-align:center"><span style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-family:monospace;font-size:8px;color:var(--muted)">${mi}</span></td>
-                  <td class="num" style="padding:4px 8px">${fR(k.spend)}</td>
+                  <td class="num" style="padding:4px 8px">${fD(k.spend)}</td>
                   <td class="num" style="padding:4px 8px;font-weight:700">${fConv(k.conv)}</td>
                   <td class="num" style="padding:4px 8px">${fP(k.ctr)}</td>
                   <td class="num" style="padding:4px 8px">${fN(k.clicks)}</td>
-                  <td class="num" style="padding:4px 8px">${fR(k.cpc)}</td>
+                  <td class="num" style="padding:4px 8px">${fD(k.cpc)}</td>
                 </tr>`;
               }).join('')}</tbody>
             </table>`}
