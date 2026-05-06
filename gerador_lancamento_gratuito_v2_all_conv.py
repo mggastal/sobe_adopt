@@ -32,13 +32,13 @@ LANCAMENTO_COD   = ""        # filtra campanhas; "" = ver tudo
 USAR_PESQUISA    = False            # False = oculta aba Pesquisa
 
 # Metas do funil — define cores (verde/amarelo/vermelho)
-CPL_BOM          = 5.0    # Custo por Lead ≤ 5 → verde | 5-10 → amarelo | acima → vermelho
-CPL_MEDIO        = 10.0
-CTR_BOM          = 0.9    # CTR ≥ 1.2% → verde | 0.8-1.2% → amarelo | abaixo → vermelho
-CTR_MEDIO        = 0.7
-CR_BOM           = 60.0   # Connect Rate ≥ 40% → verde | 25-40% → amarelo | abaixo → vermelho
-CR_MEDIO         = 25.0
-TX_CONV_BOM      = 5.0   # Taxa Conversão (Lead/PV) ≥ 30% → verde | 15-30% → amarelo | abaixo → vermelho
+CPL_BOM          = 20.0    # Custo por Lead ≤ 5 → verde | 5-10 → amarelo | acima → vermelho
+CPL_MEDIO        = 30.0
+CTR_BOM          = 0.6    # CTR ≥ 1.2% → verde | 0.8-1.2% → amarelo | abaixo → vermelho
+CTR_MEDIO        = 0.4
+CR_BOM           = 15.0   # Connect Rate ≥ 40% → verde | 25-40% → amarelo | abaixo → vermelho
+CR_MEDIO         = 5.0
+TX_CONV_BOM      = 1.0   # Taxa Conversão (Lead/PV) ≥ 30% → verde | 15-30% → amarelo | abaixo → vermelho
 TX_CONV_MEDIO    = 2.0
 CPM_BOM          = 5.0    # CPM ≤ 5 → verde | 5-12 → amarelo | acima → vermelho (menor = melhor)
 CPM_MEDIO        = 12.0
@@ -124,24 +124,29 @@ def meta_kpis(df):
     return {"lct":calc_kpis(df[df["is_lct"]]),"all":calc_kpis(df)}
 
 def build_daily(p):
-    agg=p.groupby("date").agg(
-        spend=("spend","sum"),impressions=("impressions","sum"),
-        link_clicks=("link_clicks","sum"),page_view=("page_view","sum"),
-        leads=("leads","sum")
-    ).reset_index().sort_values("date")
-    out={k:[] for k in ["days","spend","impressions","link_clicks","page_view","leads","ctr","connect_rate","tx_conv","cpl","cpm"]}
+    # Coluna de engajamento — usa Action Post Engagement se disponível
+    ENG_COL = "Action Post Engagement"
+    has_eng = ENG_COL in p.columns
+    agg_cols = dict(spend=("spend","sum"),impressions=("impressions","sum"),
+        link_clicks=("link_clicks","sum"),page_view=("page_view","sum"),leads=("leads","sum"))
+    if has_eng: agg_cols["engagement"] = (ENG_COL,"sum")
+    agg=p.groupby("date").agg(**agg_cols).reset_index().sort_values("date")
+    out={k:[] for k in ["days","spend","impressions","link_clicks","page_view","leads",
+                         "ctr","connect_rate","tx_conv","cpl","cpm","engagement","cpe"]}
     for _,r in agg.iterrows():
         sp=float(r["spend"]); imp=float(r["impressions"]); lc=float(r["link_clicks"])
         pv=float(r["page_view"]); ld=float(r["leads"])
+        eng=float(r["engagement"]) if has_eng else 0
         out["days"].append(r["date"].strftime("%d/%m"))
         out["spend"].append(round(sp,2)); out["impressions"].append(int(imp))
         out["link_clicks"].append(int(lc)); out["page_view"].append(int(pv))
-        out["leads"].append(int(ld))
+        out["leads"].append(int(ld)); out["engagement"].append(int(eng))
         out["ctr"].append(round(lc/imp*100,2) if imp>0 else None)
         out["connect_rate"].append(round(pv/lc*100,2) if lc>0 else None)
         out["tx_conv"].append(round(ld/pv*100,2) if pv>0 else None)
         out["cpl"].append(round(sp/ld,2) if ld>0 else None)
         out["cpm"].append(round(sp/imp*1000,2) if imp>0 else None)
+        out["cpe"].append(round(sp/eng,2) if eng>0 else None)
     return out
 
 def meta_daily(df):
