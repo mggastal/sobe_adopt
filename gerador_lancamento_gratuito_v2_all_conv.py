@@ -426,16 +426,19 @@ def google_keywords(df):
     hoje=pd.Timestamp(date.today()); ontem=hoje-pd.Timedelta(days=1)
     def kws_period(p):
         ag=p.groupby("keyword").agg(spend=("spend","sum"),conversions=("conversions","sum"),
-            clicks=("clicks","sum")).reset_index()
+            clicks=("clicks","sum"),impressions=("impressions","sum")).reset_index()
         ag=ag[ag["spend"]>0].sort_values("conversions",ascending=False).head(25)
         rows=[]
         for _,k in ag.iterrows():
+            sp=round(float(k["spend"]),2); cv=round(float(k["conversions"]),2)
+            cl=int(k["clicks"]); imp=int(k["impressions"])
             mt=p[p["keyword"]==k["keyword"]]["match_type"]
             rows.append({"n":str(k["keyword"]),"match":str(mt.mode()[0]) if len(mt)>0 else "",
-                "spend":round(float(k["spend"]),2),"conv":round(float(k["conversions"]),2),
-                "cpa":round(float(k["spend"]/k["conversions"]),2) if k["conversions"]>0 else None,
-                "cpc":round(float(k["spend"]/k["clicks"]),2) if k["clicks"]>0 else None,
-                "clicks":int(k["clicks"])})
+                "spend":sp,"conv":cv,
+                "cpa":round(sp/cv,2) if cv>0 else None,
+                "cpc":round(sp/cl,2) if cl>0 else None,
+                "ctr":round(cl/imp*100,2) if imp>0 else None,
+                "clicks":cl,"imp":imp})
         return rows
     result={}
     result["1"]=kws_period(df[(df["date"]>=ontem)&(df["date"]<=ontem)])
