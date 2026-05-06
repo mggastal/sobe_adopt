@@ -221,6 +221,7 @@ details.desk-only{display:block!important;}
       </div>
       <a href="#" class="sb-item active" id="sbMeta" onclick="goPage('meta',this);return false;"><span class="ico">📋</span>Geral</a>
       <a href="#" class="sb-item" id="sbDiario" onclick="goPage('diario',this);return false;"><span class="ico">📊</span>Métricas Diárias<span class="sb-dot" style="background:#1877f2"></span></a>
+      <a href="#" class="sb-item" id="sbMetaHist" onclick="goPage('meta-hist',this);return false;"><span class="ico">📅</span>Dados Históricos</a>
     </div>
     <div class="sb-platform-group" style="margin-top:8px">
       <div class="sb-platform-hd">
@@ -228,6 +229,7 @@ details.desk-only{display:block!important;}
         <span class="sb-platform-lbl">Google Ads</span>
       </div>
       <a href="#" class="sb-item" id="sbGoogle" onclick="goPage('google',this);return false;"><span class="ico">📋</span>Geral</a>
+      <a href="#" class="sb-item" id="sbGoogleHist" onclick="goPage('google-hist',this);return false;"><span class="ico">📅</span>Dados Históricos</a>
     </div>
     <div class="sb-platform-group" style="margin-top:8px">
       <div class="sb-platform-hd">
@@ -414,6 +416,70 @@ details.desk-only{display:block!important;}
       </div>
     </div>
 
+    <!-- META ADS — HISTÓRICO -->
+    <div class="page-section" id="page-meta-hist">
+      <div style="margin-bottom:16px">
+        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:3px">Meta Ads — Dados Históricos</div>
+        <div style="font-size:12px;color:var(--muted)">Análise mensal · todos os dados da conta</div>
+      </div>
+      <div class="krow k5 mb14" id="mHistKpis"></div>
+      <div class="cc mb14">
+        <div class="cc-t">Conversões · Investimento · CPL Mensal</div>
+        <div class="cc-s">Conversões (barras azuis) · Invest. (linha verde) · CPL (linha preta tracejada)</div>
+        <div class="cw" style="height:220px"><canvas id="chMHistMain"></canvas></div>
+      </div>
+      <div class="g2 mb14">
+        <div class="cc"><div class="cc-t">CPM Mensal (R$)</div><div class="cw" style="height:170px"><canvas id="chMHistCPM"></canvas></div></div>
+        <div class="cc"><div class="cc-t">CTR Mensal (%)</div><div class="cw" style="height:170px"><canvas id="chMHistCTR"></canvas></div></div>
+      </div>
+      <div class="g2 mb14">
+        <div class="cc">
+          <div class="cc-t" style="margin-bottom:10px">🏆 Melhores Meses por CPL</div>
+          <div id="mHistRankCPL"></div>
+        </div>
+        <div class="cc">
+          <div class="cc-t" style="margin-bottom:10px">📈 Maior Volume de Conversões</div>
+          <div id="mHistRankLeads"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-hd">Ranking de Campanhas — todos os meses</div>
+        <div class="tc" id="mHistCamps"></div>
+      </div>
+    </div>
+
+    <!-- GOOGLE ADS — HISTÓRICO -->
+    <div class="page-section" id="page-google-hist">
+      <div style="margin-bottom:16px">
+        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:3px">Google Ads — Dados Históricos</div>
+        <div style="font-size:12px;color:var(--muted)">Análise mensal · todos os dados da conta</div>
+      </div>
+      <div class="krow k5 mb14" id="gHistKpis"></div>
+      <div class="cc mb14">
+        <div class="cc-t">Conversões · Investimento · CPA Mensal</div>
+        <div class="cc-s">Conversões (barras amarelas) · Invest. (linha verde) · CPA (linha preta tracejada)</div>
+        <div class="cw" style="height:220px"><canvas id="chGHistMain"></canvas></div>
+      </div>
+      <div class="g2 mb14">
+        <div class="cc"><div class="cc-t">CPC Mensal ($)</div><div class="cw" style="height:170px"><canvas id="chGHistCPC"></canvas></div></div>
+        <div class="cc"><div class="cc-t">CTR Mensal (%)</div><div class="cw" style="height:170px"><canvas id="chGHistCTR"></canvas></div></div>
+      </div>
+      <div class="g2 mb14">
+        <div class="cc">
+          <div class="cc-t" style="margin-bottom:10px">🏆 Melhores Meses por CPA</div>
+          <div id="gHistRankCPA"></div>
+        </div>
+        <div class="cc">
+          <div class="cc-t" style="margin-bottom:10px">📈 Maior Volume de Conversões</div>
+          <div id="gHistRankConv"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-hd">Ranking de Campanhas — todos os meses</div>
+        <div class="tc" id="gHistCamps"></div>
+      </div>
+    </div>
+
   </div>
 </main>
 </div>
@@ -429,6 +495,7 @@ const META_RAW_CAMP    = null;
 const META_TABLES     = null;
 const DATA_GERACAO     = null;
 const META_BD     = null;
+const META_MONTHLY   = null;
 const PESQUISA     = null;
 // Google Ads
 const GOOGLE_DAILY   = null;
@@ -436,6 +503,7 @@ const GOOGLE_KPIS    = null;
 const GOOGLE_CAMPS   = null;
 const GOOGLE_KW      = null;
 const GOOGLE_BD      = null;
+const GOOGLE_MONTHLY = null;
 // SEO
 const SEO_DAILY      = null;
 const SEO_KEYWORDS   = null;
@@ -1702,6 +1770,199 @@ function renderSeo(){
   }
 }
 
+// ═══ META HISTÓRICO ═══
+function renderMetaHist(){
+  if(!META_MONTHLY) return;
+  const {lbl,totalS,totalL,cplG,cpmG,ctrG}=META_MONTHLY;
+  const tS=totalS.reduce((a,b)=>a+b,0), tL=totalL.reduce((a,b)=>a+b,0);
+  const avgCPM=cpmG.filter(v=>v>0).reduce((a,b)=>a+b,0)/(cpmG.filter(v=>v>0).length||1);
+  const avgCTR=ctrG.filter(v=>v>0).reduce((a,b)=>a+b,0)/(ctrG.filter(v=>v>0).length||1);
+  document.getElementById('mHistKpis').innerHTML=`
+    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">Invest. Total</div><div class="kpi-val" style="font-size:18px">${fR(tS)}</div></div>
+    <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Total Conversões</div><div class="kpi-val">${fN(tL)}</div></div>
+    <div class="kpi" style="--kc:${cplCls(tL>0?r2(tS/tL):null)==='cg'?'#059669':cplCls(tL>0?r2(tS/tL):null)==='cw2'?'#d97706':'#dc2626'}"><div class="kpi-lbl">CPL Geral</div><div class="kpi-val ${cplCls(tL>0?r2(tS/tL):null)}">${fR(tL>0?r2(tS/tL):null)}</div></div>
+    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">CPM Médio</div><div class="kpi-val">${fR(r2(avgCPM))}</div></div>
+    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">CTR Médio</div><div class="kpi-val">${avgCTR?avgCTR.toFixed(2)+'%':'—'}</div></div>`;
+
+  dc('chMHistMain');
+  CH['chMHistMain']=new Chart(document.getElementById('chMHistMain'),{
+    data:{labels:lbl,datasets:[
+      {label:'Conversões',data:totalL,backgroundColor:'rgba(59,130,246,.75)',borderRadius:4,type:'bar',datalabels:{display:false}},
+      {label:'Invest.',data:totalS,borderColor:'#059669',backgroundColor:'transparent',tension:.35,pointRadius:4,borderWidth:2,type:'line',yAxisID:'y1',spanGaps:false,datalabels:{display:false}},
+      {label:'CPL',data:cplG,borderColor:DARK()?'#e5e7eb':'#111827',borderDash:[5,3],backgroundColor:'transparent',pointRadius:3,borderWidth:1.5,tension:.35,type:'line',yAxisID:'y2',spanGaps:false,
+       datalabels:{display:showLabels,font:{size:labelSize,weight:'bold'},anchor:'end',align:'bottom',offset:2,formatter:v=>v!=null?'R$'+v.toFixed(1):null,color:DARK()?'#f9fafb':'#111827',clip:false}},
+    ]},
+    options:{...bo(),scales:{
+      x:{ticks:{color:TXT(),font:bf},grid:{color:GRID()}},
+      y:{ticks:{color:TXT(),font:bf},grid:{color:GRID()}},
+      y1:{position:'right',ticks:{color:'#059669',font:bf,callback:v=>'R$'+v.toLocaleString()},grid:{display:false}},
+      y2:{position:'right',ticks:{color:DARK()?'#9ca3af':'#374151',font:bf,callback:v=>'R$'+v.toFixed(1)},grid:{display:false},offset:true},
+    }}
+  });
+
+  dc('chMHistCPM');
+  CH['chMHistCPM']=new Chart(document.getElementById('chMHistCPM'),{type:'line',
+    data:{labels:lbl,datasets:[{label:'CPM',data:cpmG,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',fill:true,tension:.35,pointRadius:4,borderWidth:2,datalabels:{display:false}}]},
+    options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf,callback:v=>'R$'+v.toFixed(2)},grid:{color:GRID()},min:0}}}
+  });
+
+  dc('chMHistCTR');
+  CH['chMHistCTR']=new Chart(document.getElementById('chMHistCTR'),{type:'line',
+    data:{labels:lbl,datasets:[{label:'CTR',data:ctrG,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.08)',fill:true,tension:.35,pointRadius:4,borderWidth:2,datalabels:{display:false}}]},
+    options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf,callback:v=>v+'%'},grid:{color:GRID()},min:0}}}
+  });
+
+  // Rankings
+  const wd=lbl.map((l,i)=>({l,cpl:cplG[i],leads:totalL[i]})).filter(m=>m.cpl!=null&&m.leads>0);
+  const bCPL=[...wd].sort((a,b)=>a.cpl-b.cpl).slice(0,6);
+  const bLeads=[...wd].sort((a,b)=>b.leads-a.leads).slice(0,6);
+  const mxL=Math.max(...bLeads.map(m=>m.leads),1);
+  const mnC=Math.min(...bCPL.map(m=>m.cpl),0),mxC=Math.max(...bCPL.map(m=>m.cpl),1);
+  document.getElementById('mHistRankCPL').innerHTML=bCPL.map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="width:18px;font-size:10px;color:var(--muted2);text-align:right">${i+1}</div>
+      <div style="flex:1;font-size:12px;font-weight:600">${m.l}</div>
+      <div style="width:80px;background:var(--bg);border-radius:3px;height:4px;overflow:hidden"><div style="width:${Math.round((1-(m.cpl-mnC)/(mxC-mnC||1))*100)}%;height:100%;background:#059669;border-radius:3px"></div></div>
+      <div class="${cplCls(m.cpl)}" style="font-size:11px;font-weight:700;font-family:monospace;width:56px;text-align:right">${fR(m.cpl)}</div>
+    </div>`).join('');
+  document.getElementById('mHistRankLeads').innerHTML=bLeads.map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="width:18px;font-size:10px;color:var(--muted2);text-align:right">${i+1}</div>
+      <div style="flex:1;font-size:12px;font-weight:600">${m.l}</div>
+      <div style="width:80px;background:var(--bg);border-radius:3px;height:4px;overflow:hidden"><div style="width:${Math.round(m.leads/mxL*100)}%;height:100%;background:#3b82f6;border-radius:3px"></div></div>
+      <div style="font-size:11px;font-weight:700;font-family:monospace;color:#3b82f6;width:40px;text-align:right">${fN(m.leads)}</div>
+    </div>`).join('');
+
+  // Tabela campanhas agregada
+  if(META_MONTHLY.camps){
+    const map={};
+    META_MONTHLY.camps.forEach(c=>{
+      if(!map[c.n]) map[c.n]={n:c.n,spend:0,leads:0,imp:0,lc:0};
+      map[c.n].spend+=c.spend||0; map[c.n].leads+=c.leads||0;
+      map[c.n].imp+=c.imp||0; map[c.n].lc+=c.lc||0;
+    });
+    const all=Object.values(map).map(c=>({...c,cpl:c.leads>0?r2(c.spend/c.leads):null,ctr:c.imp>0?r2(c.lc/c.imp*100):null,cpm:c.imp>0?r2(c.spend/c.imp*1000):null})).sort((a,b)=>b.leads-a.leads);
+    document.getElementById('mHistCamps').innerHTML=`<table style="min-width:700px;width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--surface2)">
+        <th style="font-size:9px;padding:6px 10px;text-align:left;color:var(--muted);text-transform:uppercase">#</th>
+        <th style="font-size:9px;padding:6px 10px;text-align:left;color:var(--muted);text-transform:uppercase">Campanha</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Invest.</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Conv.</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CPL</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CTR</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CPM</th>
+      </tr></thead>
+      <tbody>${all.map((c,i)=>`<tr>
+        <td style="font-size:10px;padding:6px 10px;color:var(--muted2)">${i+1}</td>
+        <td style="font-size:11px;padding:6px 10px;font-weight:600;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.n}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px">${fR(c.spend)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700">${fN(c.leads)}</td>
+        <td class="num ${cplCls(c.cpl)}" style="font-size:11px;padding:6px 10px">${fR(c.cpl)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px">${c.ctr!=null?c.ctr.toFixed(2)+'%':'—'}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px">${fR(c.cpm)}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+}
+
+// ═══ GOOGLE HISTÓRICO ═══
+function renderGoogleHist(){
+  if(!GOOGLE_MONTHLY) return;
+  const {lbl,totalS,totalConv,cpaG,cpcG,ctrG}=GOOGLE_MONTHLY;
+  const fD=v=>(v==null||isNaN(v))?'—':'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const cpaCls=v=>!v?'cn':v<=10?'cg':v<=30?'cw2':'cr';
+  const fConv=v=>v==null?'—':fN(Math.round(v));
+  const tS=totalS.reduce((a,b)=>a+b,0), tC=totalConv.reduce((a,b)=>a+b,0);
+  const avgCPC=cpcG.filter(v=>v>0).reduce((a,b)=>a+b,0)/(cpcG.filter(v=>v>0).length||1);
+  const avgCTR=ctrG.filter(v=>v>0).reduce((a,b)=>a+b,0)/(ctrG.filter(v=>v>0).length||1);
+  document.getElementById('gHistKpis').innerHTML=`
+    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">Invest. Total</div><div class="kpi-val" style="font-size:18px">${fD(tS)}</div></div>
+    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Total Conversões</div><div class="kpi-val">${fConv(tC)}</div></div>
+    <div class="kpi" style="--kc:${cpaCls(tC>0?r2(tS/tC):null)==='cg'?'#059669':cpaCls(tC>0?r2(tS/tC):null)==='cw2'?'#d97706':'#dc2626'}"><div class="kpi-lbl">CPA Geral</div><div class="kpi-val ${cpaCls(tC>0?r2(tS/tC):null)}">${fD(tC>0?r2(tS/tC):null)}</div></div>
+    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">CPC Médio</div><div class="kpi-val">${fD(r2(avgCPC))}</div></div>
+    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">CTR Médio</div><div class="kpi-val">${avgCTR?avgCTR.toFixed(2)+'%':'—'}</div></div>`;
+
+  dc('chGHistMain');
+  CH['chGHistMain']=new Chart(document.getElementById('chGHistMain'),{
+    data:{labels:lbl,datasets:[
+      {label:'Conversões',data:totalConv.map(v=>Math.round(v)),backgroundColor:'rgba(234,179,8,.75)',borderRadius:4,type:'bar',datalabels:{display:false}},
+      {label:'Invest.',data:totalS,borderColor:'#059669',backgroundColor:'transparent',tension:.35,pointRadius:4,borderWidth:2,type:'line',yAxisID:'y1',spanGaps:false,datalabels:{display:false}},
+      {label:'CPA',data:cpaG,borderColor:DARK()?'#e5e7eb':'#111827',borderDash:[5,3],backgroundColor:'transparent',pointRadius:3,borderWidth:1.5,tension:.35,type:'line',yAxisID:'y2',spanGaps:false,
+       datalabels:{display:showLabels,font:{size:labelSize,weight:'bold'},anchor:'end',align:'bottom',offset:2,formatter:v=>v!=null?'$'+v.toFixed(1):null,color:DARK()?'#f9fafb':'#111827',clip:false}},
+    ]},
+    options:{...bo(),scales:{
+      x:{ticks:{color:TXT(),font:bf},grid:{color:GRID()}},
+      y:{ticks:{color:TXT(),font:bf},grid:{color:GRID()}},
+      y1:{position:'right',ticks:{color:'#059669',font:bf,callback:v=>'$'+v.toLocaleString('en-US')},grid:{display:false}},
+      y2:{position:'right',ticks:{color:DARK()?'#9ca3af':'#374151',font:bf,callback:v=>'$'+v.toFixed(1)},grid:{display:false},offset:true},
+    }}
+  });
+
+  dc('chGHistCPC');
+  CH['chGHistCPC']=new Chart(document.getElementById('chGHistCPC'),{type:'line',
+    data:{labels:lbl,datasets:[{label:'CPC',data:cpcG,borderColor:'#ea4335',backgroundColor:'rgba(234,67,53,.08)',fill:true,tension:.35,pointRadius:4,borderWidth:2,datalabels:{display:false}}]},
+    options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf,callback:v=>'$'+v.toFixed(2)},grid:{color:GRID()},min:0}}}
+  });
+
+  dc('chGHistCTR');
+  CH['chGHistCTR']=new Chart(document.getElementById('chGHistCTR'),{type:'line',
+    data:{labels:lbl,datasets:[{label:'CTR',data:ctrG,borderColor:'#fbbc04',backgroundColor:'rgba(251,188,4,.08)',fill:true,tension:.35,pointRadius:4,borderWidth:2,datalabels:{display:false}}]},
+    options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf,callback:v=>v+'%'},grid:{color:GRID()},min:0}}}
+  });
+
+  // Rankings
+  const wd=lbl.map((l,i)=>({l,cpa:cpaG[i],conv:totalConv[i]})).filter(m=>m.cpa!=null&&m.conv>0);
+  const bCPA=[...wd].sort((a,b)=>a.cpa-b.cpa).slice(0,6);
+  const bConv=[...wd].sort((a,b)=>b.conv-a.conv).slice(0,6);
+  const mxC=Math.max(...bConv.map(m=>m.conv),1);
+  const mnP=Math.min(...bCPA.map(m=>m.cpa),0),mxP=Math.max(...bCPA.map(m=>m.cpa),1);
+  document.getElementById('gHistRankCPA').innerHTML=bCPA.map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="width:18px;font-size:10px;color:var(--muted2);text-align:right">${i+1}</div>
+      <div style="flex:1;font-size:12px;font-weight:600">${m.l}</div>
+      <div style="width:80px;background:var(--bg);border-radius:3px;height:4px;overflow:hidden"><div style="width:${Math.round((1-(m.cpa-mnP)/(mxP-mnP||1))*100)}%;height:100%;background:#059669;border-radius:3px"></div></div>
+      <div class="${cpaCls(m.cpa)}" style="font-size:11px;font-weight:700;font-family:monospace;width:56px;text-align:right">${fD(m.cpa)}</div>
+    </div>`).join('');
+  document.getElementById('gHistRankConv').innerHTML=bConv.map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="width:18px;font-size:10px;color:var(--muted2);text-align:right">${i+1}</div>
+      <div style="flex:1;font-size:12px;font-weight:600">${m.l}</div>
+      <div style="width:80px;background:var(--bg);border-radius:3px;height:4px;overflow:hidden"><div style="width:${Math.round(m.conv/mxC*100)}%;height:100%;background:#fbbc04;border-radius:3px"></div></div>
+      <div style="font-size:11px;font-weight:700;font-family:monospace;color:#ca8a04;width:40px;text-align:right">${fConv(m.conv)}</div>
+    </div>`).join('');
+
+  // Tabela campanhas
+  if(GOOGLE_MONTHLY.camps){
+    const map={};
+    GOOGLE_MONTHLY.camps.forEach(c=>{
+      if(!map[c.n]) map[c.n]={n:c.n,spend:0,conv:0,clicks:0,imp:0};
+      map[c.n].spend+=c.spend||0; map[c.n].conv+=c.conv||0;
+      map[c.n].clicks+=c.clicks||0; map[c.n].imp+=c.imp||0;
+    });
+    const all=Object.values(map).map(c=>({...c,cpa:c.conv>0?r2(c.spend/c.conv):null,cpc:c.clicks>0?r2(c.spend/c.clicks):null,ctr:c.imp>0?r2(c.clicks/c.imp*100):null})).sort((a,b)=>b.conv-a.conv);
+    document.getElementById('gHistCamps').innerHTML=`<table style="min-width:700px;width:100%;border-collapse:collapse">
+      <thead><tr style="background:var(--surface2)">
+        <th style="font-size:9px;padding:6px 10px;text-align:left;color:var(--muted);text-transform:uppercase">#</th>
+        <th style="font-size:9px;padding:6px 10px;text-align:left;color:var(--muted);text-transform:uppercase">Campanha</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Invest.</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Conv.</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CPA</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CPC</th>
+        <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CTR</th>
+      </tr></thead>
+      <tbody>${all.map((c,i)=>`<tr>
+        <td style="font-size:10px;padding:6px 10px;color:var(--muted2)">${i+1}</td>
+        <td style="font-size:11px;padding:6px 10px;font-weight:600;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.n}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px">${fD(c.spend)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700">${fConv(c.conv)}</td>
+        <td class="num ${cpaCls(c.cpa)}" style="font-size:11px;padding:6px 10px">${fD(c.cpa)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px">${fD(c.cpc)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px">${c.ctr!=null?c.ctr.toFixed(2)+'%':'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+}
+
 // ═══ CONTROLES ═══
 function setPeriod(days,btn){
   periodDays=days; dateI=null; dateF=null;
@@ -1750,11 +2011,13 @@ function toggleLabels(el){
 
 function rerenderActive(){
   const p=document.querySelector('.page-section.active')?.id?.replace('page-','');
-  if(p==='meta')     renderMeta();
-  if(p==='diario')   renderDiario();
-  if(p==='google')   renderGoogle();
-  if(p==='seo')      renderSeo();
-  if(p==='pesquisa') renderPesquisa();
+  if(p==='meta')        renderMeta();
+  if(p==='diario')      renderDiario();
+  if(p==='meta-hist')   renderMetaHist();
+  if(p==='google')      renderGoogle();
+  if(p==='google-hist') renderGoogleHist();
+  if(p==='seo')         renderSeo();
+  if(p==='pesquisa')    renderPesquisa();
   setTimeout(()=>{Object.values({...CH,...PC}).forEach(c=>{try{c.resize();}catch(e){}});},60);
 }
 
@@ -1764,13 +2027,15 @@ function goPage(p,btn){
   document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
   document.getElementById('page-'+p)?.classList.add('active');
   if(btn) btn.classList.add('active');
-  const titles={meta:'Meta Ads — Geral',diario:'Métricas Diárias',google:'Google Ads',seo:'SEO',pesquisa:'Pesquisa'};
+  const titles={'meta':'Meta Ads — Geral','diario':'Métricas Diárias','meta-hist':'Meta Ads — Histórico','google':'Google Ads','google-hist':'Google Ads — Histórico','seo':'SEO','pesquisa':'Pesquisa'};
   document.getElementById('pageTitle').textContent=titles[p]||p;
-  if(p==='meta')     renderMeta();
-  if(p==='diario')   renderDiario();
-  if(p==='google')   renderGoogle();
-  if(p==='seo')      renderSeo();
-  if(p==='pesquisa') renderPesquisa();
+  if(p==='meta')        renderMeta();
+  if(p==='diario')      renderDiario();
+  if(p==='meta-hist')   renderMetaHist();
+  if(p==='google')      renderGoogle();
+  if(p==='google-hist') renderGoogleHist();
+  if(p==='seo')         renderSeo();
+  if(p==='pesquisa')    renderPesquisa();
   setTimeout(()=>{Object.values({...CH,...PC}).forEach(c=>{try{c.resize();}catch(e){}});},80);
   if(window.innerWidth<=768) closeSb();
 }
