@@ -635,7 +635,6 @@ function makeDatalabels(color,suffix='',fmt=null){
     formatter:(v,ctx)=>{
       if(v==null) return null;
       const total=ctx.dataset.data.filter(x=>x!=null).length;
-      if(total>18&&ctx.dataIndex%3!==0) return null;
       if(fmt) return fmt(v);
       return v!=null?Number(v).toFixed(1)+suffix:null;
     },anchor:'end',align:'top',offset:2,clip:false};
@@ -1374,7 +1373,6 @@ function renderDiarioCharts(){
            formatter:(v,ctx)=>{
              if(v==null) return null;
              const tot=ctx.dataset.data.filter(x=>x!=null).length;
-             if(tot>18&&ctx.dataIndex%3!==0) return null;
              return m.fmt?m.fmt(v):v.toFixed(1)+m.suffix;
            },anchor:'top',align:'top',offset:2,clip:false}},
         {label:'Média período',data:avgLine,borderColor:'#111',borderDash:[4,4],backgroundColor:'transparent',
@@ -1696,14 +1694,14 @@ function renderSeo(){
     dc('chSeoImpr');
     CH['chSeoImpr']=new Chart(document.getElementById('chSeoImpr'),{type:'line',
       data:{labels:sd.days,datasets:[
-        {label:'Impressões',data:sd.impressions,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.12)',fill:true,tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,datalabels:{display:false}},
+        {label:'Impressões',data:sd.impressions,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.12)',fill:true,tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,datalabels:{display:ctx=>showLabels,color:'#8b5cf6',font:{size:labelSize,weight:'bold'},anchor:'top',align:'top',offset:2,clip:false,formatter:v=>v!=null?fN(v):null}},
       ]},
       options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
     });
     dc('chSeoClk');
     CH['chSeoClk']=new Chart(document.getElementById('chSeoClk'),{type:'line',
       data:{labels:sd.days,datasets:[
-        {label:'Cliques',data:sd.clicks,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.12)',fill:true,tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,datalabels:{display:false}},
+        {label:'Cliques',data:sd.clicks,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.12)',fill:true,tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,datalabels:{display:ctx=>showLabels,color:'#059669',font:{size:labelSize,weight:'bold'},anchor:'top',align:'top',offset:2,clip:false,formatter:v=>v!=null?fN(v):null}},
       ]},
       options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
     });
@@ -1720,7 +1718,7 @@ function renderSeo(){
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CTR</th>
       </tr></thead>
       <tbody>${SEO_KEYWORDS.map(k=>`<tr>
-        <td style="font-size:11px;padding:6px 10px;font-weight:600">${k.query}</td>
+        <td style="font-size:11px;padding:6px 10px;font-weight:600;max-width:280px;word-break:break-word;white-space:normal;line-height:1.4">${k.query}</td>
         <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(k.imp)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700">${fN(k.clk)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px">${k.imp>0?r2(k.clk/k.imp*100).toFixed(1)+'%':'—'}</td>
@@ -1741,7 +1739,7 @@ function renderSeo(){
       <tbody>${SEO_PAGES.map(p=>{
         const slug=p.url.replace(/https?:\/\/[^/]+/,'').replace(/\/$/, '')||'/';
         return `<tr>
-          <td style="font-size:11px;padding:6px 10px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.url}">${slug}</td>
+          <td style="font-size:11px;padding:6px 10px;max-width:280px;word-break:break-all;white-space:normal;line-height:1.4" title="${p.url}">${slug}</td>
           <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(p.imp)}</td>
           <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700">${fN(p.clk)}</td>
           <td class="num" style="font-size:11px;padding:6px 10px">${p.imp>0?r2(p.clk/p.imp*100).toFixed(1)+'%':'—'}</td>
