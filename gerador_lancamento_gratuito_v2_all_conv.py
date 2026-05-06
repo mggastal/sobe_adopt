@@ -527,6 +527,55 @@ def load_seo():
         countries=[]
     print(f"     Países: {len(countries)}")
     return daily, keywords, pages, countries
+
+def meta_monthly(df):
+    PT_MONTHS={"Jan":"Jan","Feb":"Fev","Mar":"Mar","Apr":"Abr","May":"Mai",
+                "Jun":"Jun","Jul":"Jul","Aug":"Ago","Sep":"Set","Oct":"Out","Nov":"Nov","Dec":"Dez"}
+    df=df.copy(); df["ym"]=df["date"].dt.to_period("M")
+    months=sorted(df["ym"].unique())
+    out={"lbl":[],"totalS":[],"totalL":[],"cplG":[],"cpmG":[],"ctrG":[],"camps":[]}
+    for m in months:
+        p=df[df["ym"]==m]
+        sp=round(float(p["spend"].sum()),2); ld=int(p["leads"].sum())
+        imp=float(p["impressions"].sum()); lc=float(p["link_clicks"].sum())
+        raw_lbl=pd.Period(m,"M").strftime("%b/%y")
+        pt_lbl=PT_MONTHS.get(raw_lbl[:3],raw_lbl[:3])+raw_lbl[3:]
+        out["lbl"].append(pt_lbl); out["totalS"].append(sp); out["totalL"].append(ld)
+        out["cplG"].append(round(sp/ld,2) if ld>0 else None)
+        out["cpmG"].append(round(sp/imp*1000,2) if imp>0 else None)
+        out["ctrG"].append(round(lc/imp*100,2) if imp>0 else None)
+        ag=p.groupby("campaign").agg(spend=("spend","sum"),leads=("leads","sum"),
+            impressions=("impressions","sum"),link_clicks=("link_clicks","sum")).reset_index()
+        for _,r in ag.iterrows():
+            out["camps"].append({"n":str(r["campaign"]),"spend":round(float(r["spend"]),2),
+                "leads":int(r["leads"]),"imp":int(r["impressions"]),"lc":int(r["link_clicks"])})
+    print(f"     Meta Mensal: {len(months)} meses")
+    return out
+
+def google_monthly(df):
+    PT_MONTHS={"Jan":"Jan","Feb":"Fev","Mar":"Mar","Apr":"Abr","May":"Mai",
+                "Jun":"Jun","Jul":"Jul","Aug":"Ago","Sep":"Set","Oct":"Out","Nov":"Nov","Dec":"Dez"}
+    df=df.copy(); df["ym"]=df["date"].dt.to_period("M")
+    months=sorted(df["ym"].unique())
+    out={"lbl":[],"totalS":[],"totalConv":[],"cpaG":[],"cpcG":[],"ctrG":[],"camps":[]}
+    for m in months:
+        p=df[df["ym"]==m]
+        sp=round(float(p["spend"].sum()),2); cv=round(float(p["conversions"].sum()),2)
+        cl=int(p["clicks"].sum()); imp=int(p["impressions"].sum())
+        raw_lbl=pd.Period(m,"M").strftime("%b/%y")
+        pt_lbl=PT_MONTHS.get(raw_lbl[:3],raw_lbl[:3])+raw_lbl[3:]
+        out["lbl"].append(pt_lbl); out["totalS"].append(sp); out["totalConv"].append(cv)
+        out["cpaG"].append(round(sp/cv,2) if cv>0 else None)
+        out["cpcG"].append(round(sp/cl,2) if cl>0 else None)
+        out["ctrG"].append(round(cl/imp*100,2) if imp>0 else None)
+        ag=p.groupby("campaign").agg(spend=("spend","sum"),conversions=("conversions","sum"),
+            clicks=("clicks","sum"),impressions=("impressions","sum")).reset_index()
+        for _,r in ag.iterrows():
+            out["camps"].append({"n":str(r["campaign"]),"spend":round(float(r["spend"]),2),
+                "conv":round(float(r["conversions"]),2),"clicks":int(r["clicks"]),"imp":int(r["impressions"])})
+    print(f"     Google Mensal: {len(months)} meses")
+    return out
+
 def load_pesquisa():
     print("  Lendo pesquisa..."); return pd.read_csv(sheet_url("Pesquisa"))
 
@@ -567,8 +616,8 @@ def replace_js_const(html, name, value):
     if not found[0]: print(f"  AVISO: não encontrou const {name}")
     return new_html
 
-def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, pes,
-               g_daily, g_kpis, g_camps, g_kw, g_bd,
+def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, meta_month, pes,
+               g_daily, g_kpis, g_camps, g_kw, g_bd, g_month,
                seo_daily, seo_kw, seo_pages, seo_countries):
     html=Path(tpl).read_text(encoding="utf-8")
     # Meta
@@ -578,14 +627,16 @@ def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, pes,
     html=replace_js_const(html,"META_RAW_CAMP",  meta_raw_c)
     html=replace_js_const(html,"META_TABLES",    meta_t)
     html=replace_js_const(html,"META_BD",        meta_bd)
+    html=replace_js_const(html,"META_MONTHLY",   meta_month)
     html=replace_js_const(html,"PESQUISA", pes if USAR_PESQUISA else False)
     html=replace_js_const(html,"DATA_GERACAO", date.today().strftime("%Y-%m-%d"))
     # Google
-    html=replace_js_const(html,"GOOGLE_DAILY",  g_daily)
-    html=replace_js_const(html,"GOOGLE_KPIS",   g_kpis)
-    html=replace_js_const(html,"GOOGLE_CAMPS",  g_camps)
-    html=replace_js_const(html,"GOOGLE_KW",     g_kw)
-    html=replace_js_const(html,"GOOGLE_BD",     g_bd)
+    html=replace_js_const(html,"GOOGLE_DAILY",   g_daily)
+    html=replace_js_const(html,"GOOGLE_KPIS",    g_kpis)
+    html=replace_js_const(html,"GOOGLE_CAMPS",   g_camps)
+    html=replace_js_const(html,"GOOGLE_KW",      g_kw)
+    html=replace_js_const(html,"GOOGLE_BD",      g_bd)
+    html=replace_js_const(html,"GOOGLE_MONTHLY", g_month)
     # SEO
     html=replace_js_const(html,"SEO_DAILY",     seo_daily)
     html=replace_js_const(html,"SEO_KEYWORDS",  seo_kw)
@@ -619,6 +670,7 @@ def main():
     m_raw=meta_raw(df_meta)
     m_t=meta_tables(df_meta,img_dir)
     m_bd=meta_breakdowns(df_meta)
+    m_month=meta_monthly(df_meta)
     total_leads=m_k["lct"]["leads"] if LANCAMENTO_COD else m_k["all"]["leads"]
     print(f"  ✓ {total_leads} leads | R$ {m_k['lct']['spend']:,.2f} invest.")
 
@@ -630,11 +682,13 @@ def main():
         g_camps=google_camps(df_google)
         g_kw=google_keywords(df_google)
         g_bd=google_breakdowns(df_google)
+        g_month=google_monthly(df_google)
         print(f"  ✓ {df_google['conversions'].sum():.0f} conv. | R$ {df_google['spend'].sum():,.2f} invest.")
     except Exception as e:
         print(f"  Aviso Google: {e}")
         g_daily={"days":[],"spend":[],"conversions":[],"cpa":[],"ctr":[],"cpc":[]}
         g_kpis={}; g_camps={}; g_kw={}; g_bd={}
+        g_month={"lbl":[],"totalS":[],"totalConv":[],"cpaG":[],"cpcG":[],"ctrG":[],"camps":[]}
 
     print("\n[SEO]")
     try:
@@ -657,8 +711,8 @@ def main():
     print("\n[HTML]")
     if not Path(TEMPLATE_FILE).exists():
         print(f"  ERRO: {TEMPLATE_FILE} não encontrado"); return
-    html=inject_all(TEMPLATE_FILE,m_k,m_d,m_dc,m_raw,m_t,m_bd,pes,
-                    g_daily,g_kpis,g_camps,g_kw,g_bd,
+    html=inject_all(TEMPLATE_FILE,m_k,m_d,m_dc,m_raw,m_t,m_bd,m_month,pes,
+                    g_daily,g_kpis,g_camps,g_kw,g_bd,g_month,
                     seo_daily,seo_kw,seo_pages,seo_countries)
     Path(OUTPUT_FILE).write_text(html,encoding="utf-8")
     print(f"  ✓ {OUTPUT_FILE} ({len(html)//1024}KB)")
