@@ -393,13 +393,22 @@ def google_camps(df):
             for _,ag2 in adg.sort_values("conversions",ascending=False).iterrows():
                 sp2=round(float(ag2["spend"]),2); cv2=round(float(ag2["conversions"]),2)
                 cl2=int(ag2["clicks"]); imp2=int(ag2["impressions"])
-                # keywords
+                # keywords — incluir match, impressions e ctr
                 kws=p[(p["campaign"]==r["campaign"])&(p["adgroup"]==ag2["adgroup"])].groupby("keyword").agg(
-                    spend=("spend","sum"),conversions=("conversions","sum"),clicks=("clicks","sum")).reset_index()
-                kw_list=[{"n":str(k["keyword"]),"spend":round(float(k["spend"]),2),"conv":round(float(k["conversions"]),2),
-                    "cpa":round(float(k["spend"]/k["conversions"]),2) if k["conversions"]>0 else None,
-                    "cpc":round(float(k["spend"]/k["clicks"]),2) if k["clicks"]>0 else None,
-                    "clicks":int(k["clicks"])} for _,k in kws.sort_values("conversions",ascending=False).iterrows()]
+                    spend=("spend","sum"),conversions=("conversions","sum"),
+                    clicks=("clicks","sum"),impressions=("impressions","sum")).reset_index()
+                kw_list=[]
+                for _,k in kws.sort_values("conversions",ascending=False).iterrows():
+                    sp_k=round(float(k["spend"]),2); cv_k=round(float(k["conversions"]),2)
+                    cl_k=int(k["clicks"]); imp_k=int(k["impressions"])
+                    mt=p[(p["campaign"]==r["campaign"])&(p["adgroup"]==ag2["adgroup"])&(p["keyword"]==k["keyword"])]["match_type"]
+                    kw_list.append({"n":str(k["keyword"]),
+                        "match":str(mt.mode()[0]) if len(mt)>0 else "",
+                        "spend":sp_k,"conv":cv_k,
+                        "cpa":round(sp_k/cv_k,2) if cv_k>0 else None,
+                        "cpc":round(sp_k/cl_k,2) if cl_k>0 else None,
+                        "ctr":round(cl_k/imp_k*100,2) if imp_k>0 else None,
+                        "clicks":cl_k,"imp":imp_k})
                 adgroups.append({"n":str(ag2["adgroup"]),"spend":sp2,"conv":cv2,
                     "cpa":round(sp2/cv2,2) if cv2>0 else None,"cpc":round(sp2/cl2,2) if cl2>0 else None,
                     "ctr":round(cl2/imp2*100,2) if imp2>0 else None,"clicks":cl2,"imp":imp2,"keywords":kw_list})
