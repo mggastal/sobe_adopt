@@ -1391,42 +1391,49 @@ function buildPizzas(){
 function renderGoogle(){
   if(!GOOGLE_DAILY||!GOOGLE_KPIS) return;
 
-  // KPIs — usar período selecionado
   const key=getPeriodKey()||'all';
   const gk=GOOGLE_KPIS[key]||GOOGLE_KPIS['all']||{};
   const cpaCls=v=>!v?'cn':v<=10?'cg':v<=30?'cw2':'cr';
+  // Conversões sempre inteiras
+  const fConv=v=>v==null?'—':fN(Math.round(v));
+
+  // KPIs
   document.getElementById('gKpis').innerHTML=`
     <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="font-size:16px;color:var(--text)">${fR(gk.spend)}</div><div class="kpi-sub">Google Ads</div></div>
-    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Conversões</div><div class="kpi-val" style="color:var(--text)">${fN(gk.conversions)}</div><div class="kpi-sub">All Conversions</div></div>
+    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Conversões</div><div class="kpi-val" style="color:var(--text)">${fConv(gk.conversions)}</div><div class="kpi-sub">All Conversions</div></div>
     <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--text)">${fN(gk.clicks)}</div><div class="kpi-sub">CTR: ${fP(gk.ctr)}</div></div>
     <div class="kpi" style="--kc:${cpaCls(gk.cpa)==='cg'?'#059669':cpaCls(gk.cpa)==='cw2'?'#d97706':'#dc2626'}"><div class="kpi-lbl">CPA</div><div class="kpi-val ${cpaCls(gk.cpa)}">${fR(gk.cpa)}</div><div class="kpi-sub">CPC: ${fR(gk.cpc)}</div></div>`;
 
-  // Gráfico diário
-  const gd=GOOGLE_DAILY; dc('chGoogle');
-  CH['chGoogle']=new Chart(document.getElementById('chGoogle'),{
-    data:{labels:gd.days,datasets:[
-      {label:'Conversões',data:gd.conversions,backgroundColor:'rgba(5,150,105,.7)',borderRadius:3,type:'bar',yAxisID:'y1',
-       datalabels:{...makeDatalabels('#059669','',v=>v!=null?fN(v):null),display:ctx=>showLabels}},
-      {label:'Invest.',data:gd.spend,borderColor:'#3b82f6',backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,type:'line',spanGaps:true,datalabels:{display:false}},
-      {label:'CPA',data:gd.cpa,borderColor:'#111',borderDash:[5,3],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:1.5,type:'line',yAxisID:'y2',spanGaps:true,
-       datalabels:{display:ctx=>showLabels,color:'#333',font:{size:labelSize,weight:'bold'},formatter:v=>v!=null?'R$'+v.toFixed(2):null,anchor:'end',align:'top',offset:2,clip:false}},
-    ]},
-    options:{...bo(),scales:{
-      x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},
-      y:{ticks:{color:TXT(),font:bf,callback:v=>'R$'+v.toLocaleString()},grid:{color:GRID()},min:0},
-      y1:{position:'right',ticks:{color:'#059669',font:bf},grid:{display:false},grace:'20%'},
-      y2:{position:'right',ticks:{color:'#555',font:bf,callback:v=>'R$'+v.toFixed(0)},grid:{display:false},offset:true,min:0},
-    }}
-  });
+  // Gráfico — filtrado pelo período selecionado
+  const gd=applyPeriod(GOOGLE_DAILY); dc('chGoogle');
+  if(gd){
+    const convInt=(gd.conversions||[]).map(v=>v!=null?Math.round(v):null);
+    CH['chGoogle']=new Chart(document.getElementById('chGoogle'),{
+      data:{labels:gd.days,datasets:[
+        {label:'Conversões',data:convInt,backgroundColor:'rgba(5,150,105,.7)',borderRadius:3,type:'bar',yAxisID:'y1',
+         datalabels:{...makeDatalabels('#059669','',v=>v!=null?fN(v):null),display:ctx=>showLabels}},
+        {label:'Invest.',data:gd.spend,borderColor:'#3b82f6',backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,type:'line',spanGaps:true,datalabels:{display:false}},
+        {label:'CPA',data:gd.cpa,borderColor:'#111',borderDash:[5,3],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:1.5,type:'line',yAxisID:'y2',spanGaps:true,
+         datalabels:{display:ctx=>showLabels,color:'#333',font:{size:labelSize,weight:'bold'},formatter:v=>v!=null?'R$'+v.toFixed(2):null,anchor:'end',align:'top',offset:2,clip:false}},
+      ]},
+      options:{...bo(),scales:{
+        x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},
+        y:{ticks:{color:TXT(),font:bf,callback:v=>'R$'+v.toLocaleString()},grid:{color:GRID()},min:0},
+        y1:{position:'right',ticks:{color:'#059669',font:bf},grid:{display:false},grace:'20%'},
+        y2:{position:'right',ticks:{color:'#555',font:bf,callback:v=>'R$'+v.toFixed(0)},grid:{display:false},offset:true,min:0},
+      }}
+    });
+  }
 
-  // Tabela campanhas
+  // Tabela campanhas — expansível com grupos e keywords
   const camps=(GOOGLE_CAMPS&&GOOGLE_CAMPS[key])||[];
   const gc=document.getElementById('gCamps');
+  const MATCH_ICON={'EXACT':'[E]','PHRASE':'"F"','BROAD':'~A~'};
   if(!camps.length){gc.innerHTML='<div style="padding:12px;color:var(--muted);font-size:12px">Sem dados no período</div>';}
   else{
     gc.innerHTML=`<table style="min-width:700px;width:100%;border-collapse:collapse">
       <thead><tr style="background:var(--surface2)">
-        <th style="font-size:9px;padding:6px 10px;text-align:left;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Campanha</th>
+        <th style="font-size:9px;padding:6px 10px;text-align:left;color:var(--muted);text-transform:uppercase;letter-spacing:.8px" colspan="2">Campanha</th>
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Invest.</th>
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Conv.</th>
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">Cliques</th>
@@ -1435,17 +1442,30 @@ function renderGoogle(){
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CPC</th>
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CPA</th>
       </tr></thead>
-      <tbody>${camps.map(c=>`<tr>
+      <tbody id="gCampsBody"></tbody>
+    </table>`;
+    const tbody=document.getElementById('gCampsBody');
+    camps.forEach((c,ci)=>{
+      const cid=`gc_${ci}`;
+      const tr=document.createElement('tr');
+      tr.style.cursor='pointer';
+      tr.onclick=()=>toggleGCamp(cid,c);
+      tr.innerHTML=`
+        <td style="width:20px;text-align:center;color:var(--muted2);font-size:11px" id="arr_${cid}">▶</td>
         <td style="font-size:11px;padding:7px 10px;font-weight:600;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.n}">${c.n}</td>
         <td class="num" style="font-size:11px;padding:7px 10px">${fR(c.spend)}</td>
-        <td class="num" style="font-size:11px;padding:7px 10px;font-weight:700">${fN(c.conv)}</td>
+        <td class="num" style="font-size:11px;padding:7px 10px;font-weight:700">${fConv(c.conv)}</td>
         <td class="num" style="font-size:11px;padding:7px 10px">${fN(c.clicks)}</td>
         <td class="num" style="font-size:11px;padding:7px 10px;color:var(--muted2)">${fN(c.imp)}</td>
         <td class="num" style="font-size:11px;padding:7px 10px">${fP(c.ctr)}</td>
         <td class="num" style="font-size:11px;padding:7px 10px">${fR(c.cpc)}</td>
-        <td class="num ${cpaCls(c.cpa)}" style="font-size:11px;padding:7px 10px">${fR(c.cpa)}</td>
-      </tr>`).join('')}</tbody>
-    </table>`;
+        <td class="num ${cpaCls(c.cpa)}" style="font-size:11px;padding:7px 10px">${fR(c.cpa)}</td>`;
+      tbody.appendChild(tr);
+      const subTr=document.createElement('tr');
+      subTr.id=cid; subTr.style.display='none';
+      subTr.innerHTML=`<td colspan="9" style="padding:0"><div id="sub_${cid}" style="background:var(--surface2);border-top:1px solid var(--border);padding:8px 24px"></div></td>`;
+      tbody.appendChild(subTr);
+    });
   }
 
   // Top Keywords
@@ -1463,61 +1483,127 @@ function renderGoogle(){
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CPC</th>
         <th class="num" style="font-size:9px;padding:6px 10px;color:var(--muted);text-transform:uppercase">CPA</th>
       </tr></thead>
-      <tbody>${kws.map(k=>`<tr>
-        <td style="font-size:11px;padding:6px 10px;font-weight:600">${k.n}</td>
-        <td style="font-size:10px;padding:6px 10px;color:var(--muted2)">${k.match||'—'}</td>
-        <td class="num" style="font-size:11px;padding:6px 10px">${fR(k.spend)}</td>
-        <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700">${fN(k.conv)}</td>
-        <td class="num" style="font-size:11px;padding:6px 10px">${fN(k.clicks)}</td>
-        <td class="num" style="font-size:11px;padding:6px 10px">${fR(k.cpc)}</td>
-        <td class="num ${cpaCls(k.cpa)}" style="font-size:11px;padding:6px 10px">${fR(k.cpa)}</td>
-      </tr>`).join('')}</tbody>
+      <tbody>${kws.map(k=>{
+        const mi=MATCH_ICON[k.match]||k.match||'—';
+        return `<tr>
+          <td style="font-size:11px;padding:6px 10px;font-weight:600">${k.n}</td>
+          <td style="font-size:10px;padding:6px 10px;text-align:center"><span style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:9px;font-family:monospace;color:var(--muted)">${mi}</span></td>
+          <td class="num" style="font-size:11px;padding:6px 10px">${fR(k.spend)}</td>
+          <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700">${fConv(k.conv)}</td>
+          <td class="num" style="font-size:11px;padding:6px 10px">${fN(k.clicks)}</td>
+          <td class="num" style="font-size:11px;padding:6px 10px">${fR(k.cpc)}</td>
+          <td class="num ${cpaCls(k.cpa)}" style="font-size:11px;padding:6px 10px">${fR(k.cpa)}</td>
+        </tr>`;
+      }).join('')}</tbody>
     </table>`;
   }
 
-  // Breakdowns gender/age
+  // Breakdowns
   const gbd=(GOOGLE_BD&&GOOGLE_BD[key])||{};
-  function gSegTable(elId,data,lbl,dimKey){
+  function gSegTable(elId,data,lbl){
     const el=document.getElementById(elId);
     if(!data?.length){el.innerHTML='<div style="padding:8px;font-size:11px;color:var(--muted)">Sem dados</div>';return;}
     el.innerHTML=`<table><thead><tr><th>${lbl}</th><th class="num">Invest.</th><th class="num">Conv.</th><th class="num">CPA</th></tr></thead>
       <tbody>${data.map(r=>`<tr>
         <td style="font-size:11px">${r.n}</td>
         <td class="num">${fR(r.spend)}</td>
-        <td class="num">${fN(r.conv)}</td>
+        <td class="num">${fConv(r.conv)}</td>
         <td class="num ${cpaCls(r.cpl)}">${fR(r.cpl)}</td>
       </tr>`).join('')}</tbody></table>`;
   }
-  gSegTable('gGender', gbd.gender, 'Gênero', 'n');
-  gSegTable('gAge',    gbd.age,    'Faixa Etária', 'n');
+  gSegTable('gGender', gbd.gender, 'Gênero');
+  gSegTable('gAge',    gbd.age,    'Faixa Etária');
+}
+
+function toggleGCamp(cid, camp){
+  const sub=document.getElementById(cid);
+  const arr=document.getElementById('arr_'+cid);
+  const open=sub.style.display==='none';
+  sub.style.display=open?'table-row':'none';
+  if(arr) arr.textContent=open?'▼':'▶';
+  if(!open) return;
+  const key=getPeriodKey()||'all';
+  const MATCH_ICON={'EXACT':'[E]','PHRASE':'"F"','BROAD':'~A~'};
+  const cpaCls=v=>!v?'cn':v<=10?'cg':v<=30?'cw2':'cr';
+  const fConv=v=>v==null?'—':fN(Math.round(v));
+  const inner=document.getElementById('sub_'+cid);
+  if(!camp.adgroups?.length){inner.innerHTML='<div style="padding:8px;color:var(--muted);font-size:11px">Sem grupos</div>';return;}
+  inner.innerHTML='<div style="font-size:10px;color:var(--muted2);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Grupos de Anúncio — '+camp.n+'</div>'+
+    camp.adgroups.map((ag,ai)=>{
+      const agid=`${cid}_ag${ai}`;
+      return `<div style="margin-bottom:4px">
+        <div onclick="toggleGAdgroup('${agid}',this)" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--border)">
+          <span id="arr_${agid}" style="color:var(--muted2);font-size:10px">▶</span>
+          <span style="font-size:11px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ag.n}</span>
+          <span style="font-size:10px;color:var(--muted2)">${fR(ag.spend)}</span>
+          <span style="font-size:10px;font-weight:700">${fConv(ag.conv)} conv.</span>
+          <span style="font-size:10px;color:var(--muted2)">CPC ${fR(ag.cpc)}</span>
+          <span class="num ${cpaCls(ag.cpa)}" style="font-size:10px">${fR(ag.cpa)} CPA</span>
+        </div>
+        <div id="${agid}" style="display:none;padding:4px 0 4px 16px">
+          ${!ag.keywords?.length?'<div style="padding:6px;color:var(--muted);font-size:11px">Sem palavras-chave</div>':
+            `<table style="width:100%;border-collapse:collapse;font-size:10px">
+              <thead><tr style="background:var(--bg)">
+                <th style="padding:3px 8px;text-align:left;color:var(--muted2);font-size:9px;text-transform:uppercase">Keyword</th>
+                <th style="padding:3px 8px;color:var(--muted2);font-size:9px;text-transform:uppercase">Match</th>
+                <th class="num" style="padding:3px 8px;color:var(--muted2);font-size:9px;text-transform:uppercase">Invest.</th>
+                <th class="num" style="padding:3px 8px;color:var(--muted2);font-size:9px;text-transform:uppercase">Conv.</th>
+                <th class="num" style="padding:3px 8px;color:var(--muted2);font-size:9px;text-transform:uppercase">Cliques</th>
+                <th class="num" style="padding:3px 8px;color:var(--muted2);font-size:9px;text-transform:uppercase">CPC</th>
+              </tr></thead>
+              <tbody>${ag.keywords.map(k=>{
+                const mi=MATCH_ICON[k.match]||k.match||'—';
+                return `<tr>
+                  <td style="padding:4px 8px;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${k.n}</td>
+                  <td style="padding:4px 8px;text-align:center"><span style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-family:monospace;font-size:8px;color:var(--muted)">${mi}</span></td>
+                  <td class="num" style="padding:4px 8px">${fR(k.spend)}</td>
+                  <td class="num" style="padding:4px 8px;font-weight:700">${fConv(k.conv)}</td>
+                  <td class="num" style="padding:4px 8px">${fN(k.clicks)}</td>
+                  <td class="num" style="padding:4px 8px">${fR(k.cpc)}</td>
+                </tr>`;
+              }).join('')}</tbody>
+            </table>`}
+        </div>
+      </div>`;
+    }).join('');
+}
+
+function toggleGAdgroup(agid, el){
+  const sub=document.getElementById(agid);
+  const arr=document.getElementById('arr_'+agid);
+  const open=sub.style.display==='none';
+  sub.style.display=open?'block':'none';
+  if(arr) arr.textContent=open?'▼':'▶';
 }
 
 // ═══ SEO ═══
 function renderSeo(){
   if(!SEO_DAILY&&!SEO_KEYWORDS&&!SEO_PAGES) return;
 
-  // KPIs totais
-  const totImp=(SEO_DAILY?.impressions||[]).reduce((a,b)=>a+b,0);
-  const totClk=(SEO_DAILY?.clicks||[]).reduce((a,b)=>a+b,0);
+  // KPIs filtrados pelo período
+  const sd0=applyPeriod(SEO_DAILY)||SEO_DAILY;
+  const totImp=(sd0?.impressions||[]).reduce((a,b)=>a+b,0);
+  const totClk=(sd0?.clicks||[]).reduce((a,b)=>a+b,0);
   const ctr=totImp>0?r2(totClk/totImp*100):null;
   document.getElementById('seoKpis').innerHTML=`
     <div class="kpi" style="--kc:#8b5cf6"><div class="kpi-lbl">Impressões Orgânicas</div><div class="kpi-val" style="color:var(--text)">${fN(totImp)}</div><div class="kpi-sub">Search Console</div></div>
     <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Cliques Orgânicos</div><div class="kpi-val" style="color:var(--text)">${fN(totClk)}</div><div class="kpi-sub">Search Console</div></div>
     <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">CTR Médio</div><div class="kpi-val" style="color:var(--text)">${ctr!=null?ctr+'%':'—'}</div><div class="kpi-sub">Cliques / Impressões</div></div>`;
 
-  // Gráficos diários
-  if(SEO_DAILY){
+  // Gráficos diários — filtrados pelo período
+  const sd=applyPeriod(SEO_DAILY);
+  if(sd){
     dc('chSeoImpr');
     CH['chSeoImpr']=new Chart(document.getElementById('chSeoImpr'),{type:'line',
-      data:{labels:SEO_DAILY.days,datasets:[
-        {label:'Impressões',data:SEO_DAILY.impressions,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.12)',fill:true,tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,datalabels:{display:false}},
+      data:{labels:sd.days,datasets:[
+        {label:'Impressões',data:sd.impressions,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.12)',fill:true,tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,datalabels:{display:false}},
       ]},
       options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
     });
     dc('chSeoClk');
     CH['chSeoClk']=new Chart(document.getElementById('chSeoClk'),{type:'line',
-      data:{labels:SEO_DAILY.days,datasets:[
-        {label:'Cliques',data:SEO_DAILY.clicks,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.12)',fill:true,tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,datalabels:{display:false}},
+      data:{labels:sd.days,datasets:[
+        {label:'Cliques',data:sd.clicks,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.12)',fill:true,tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,datalabels:{display:false}},
       ]},
       options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
     });
