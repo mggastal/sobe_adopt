@@ -323,7 +323,198 @@ def meta_breakdowns(df):
     result['_raw_ga']=raw_ga; result['_raw_pt']=raw_pt
     return result
 
-# ══ PESQUISA ══════════════════════════════════════════
+# ══ GOOGLE ADS ════════════════════════════════════════
+URL_GOOGLE   = sheet_url("google-ads")
+URL_GOOGLE_GE= sheet_url("google-breakdown-gender")
+URL_GOOGLE_AG= sheet_url("google-breakdown-age")
+
+AGE_MAP = {"AGE_RANGE_18_24":"18-24","AGE_RANGE_25_34":"25-34","AGE_RANGE_35_44":"35-44",
+           "AGE_RANGE_45_54":"45-54","AGE_RANGE_55_64":"55-64","AGE_RANGE_65_UP":"65+"}
+
+def load_google():
+    print("  Lendo google-ads...")
+    df=pd.read_csv(URL_GOOGLE)
+    df["date"]=pd.to_datetime(df["Date (Segment)"],errors="coerce")
+    df["spend"]=to_num(df["Cost (Spend, Amount Spent)"])
+    df["conversions"]=to_num(df["All Conversions"])
+    df["clicks"]=to_num(df["Clicks"])
+    df["impressions"]=to_num(df["Impressions"])
+    df["campaign"]=df["Campaign Name"]
+    df["adgroup"]=df["Ad Group Name"]
+    df["keyword"]=df["Keyword (Ad Group Criterion)"]
+    df["match_type"]=df["Match Type (Segment)"]
+    df=df.dropna(subset=["date"])
+    print(f"     {len(df)} linhas | {df['date'].min().date()} → {df['date'].max().date()}")
+    return df
+
+def google_daily(df):
+    agg=df.groupby("date").agg(spend=("spend","sum"),conversions=("conversions","sum"),
+        clicks=("clicks","sum"),impressions=("impressions","sum")).reset_index().sort_values("date")
+    out={k:[] for k in ["days","spend","conversions","cpa","ctr","cpc"]}
+    for _,r in agg.iterrows():
+        sp=round(float(r["spend"]),2); cv=round(float(r["conversions"]),2)
+        cl=int(r["clicks"]); imp=int(r["impressions"])
+        out["days"].append(r["date"].strftime("%d/%m"))
+        out["spend"].append(sp); out["conversions"].append(cv)
+        out["cpa"].append(round(sp/cv,2) if cv>0 else None)
+        out["ctr"].append(round(cl/imp*100,2) if imp>0 else None)
+        out["cpc"].append(round(sp/cl,2) if cl>0 else None)
+    return out
+
+def google_kpis(df):
+    hoje=pd.Timestamp(date.today()); ontem=hoje-pd.Timedelta(days=1)
+    def kpi(p):
+        sp=float(p["spend"].sum()); cv=float(p["conversions"].sum())
+        cl=int(p["clicks"].sum()); imp=int(p["impressions"].sum())
+        return {"spend":round(sp,2),"conversions":round(cv,2),"clicks":cl,"impressions":imp,
+                "cpa":round(sp/cv,2) if cv>0 else None,
+                "ctr":round(cl/imp*100,2) if imp>0 else None,
+                "cpc":round(sp/cl,2) if cl>0 else None}
+    result={}
+    result["1"]=kpi(df[(df["date"]>=ontem)&(df["date"]<=ontem)])
+    for n in [7,14,30]: result[str(n)]=kpi(df[df["date"]>=hoje-pd.Timedelta(days=n-1)])
+    result["all"]=kpi(df)
+    return result
+
+def google_camps(df):
+    hoje=pd.Timestamp(date.today()); ontem=hoje-pd.Timedelta(days=1)
+    def camps_period(p):
+        if not len(p): return []
+        ag=p.groupby("campaign").agg(spend=("spend","sum"),conversions=("conversions","sum"),
+            clicks=("clicks","sum"),impressions=("impressions","sum")).reset_index()
+        rows=[]
+        for _,r in ag.sort_values("conversions",ascending=False).iterrows():
+            sp=round(float(r["spend"]),2); cv=round(float(r["conversions"]),2)
+            cl=int(r["clicks"]); imp=int(r["impressions"])
+            # Grupos de anúncio
+            adg=p[p["campaign"]==r["campaign"]].groupby("adgroup").agg(spend=("spend","sum"),conversions=("conversions","sum"),
+                clicks=("clicks","sum"),impressions=("impressions","sum")).reset_index()
+            adgroups=[]
+            for _,ag2 in adg.sort_values("conversions",ascending=False).iterrows():
+                sp2=round(float(ag2["spend"]),2); cv2=round(float(ag2["conversions"]),2)
+                cl2=int(ag2["clicks"]); imp2=int(ag2["impressions"])
+                # keywords
+                kws=p[(p["campaign"]==r["campaign"])&(p["adgroup"]==ag2["adgroup"])].groupby("keyword").agg(
+                    spend=("spend","sum"),conversions=("conversions","sum"),clicks=("clicks","sum")).reset_index()
+                kw_list=[{"n":str(k["keyword"]),"spend":round(float(k["spend"]),2),"conv":round(float(k["conversions"]),2),
+                    "cpa":round(float(k["spend"]/k["conversions"]),2) if k["conversions"]>0 else None,
+                    "cpc":round(float(k["spend"]/k["clicks"]),2) if k["clicks"]>0 else None,
+                    "clicks":int(k["clicks"])} for _,k in kws.sort_values("conversions",ascending=False).iterrows()]
+                adgroups.append({"n":str(ag2["adgroup"]),"spend":sp2,"conv":cv2,
+                    "cpa":round(sp2/cv2,2) if cv2>0 else None,"cpc":round(sp2/cl2,2) if cl2>0 else None,
+                    "ctr":round(cl2/imp2*100,2) if imp2>0 else None,"clicks":cl2,"imp":imp2,"keywords":kw_list})
+            rows.append({"n":str(r["campaign"]),"spend":sp,"conv":cv,
+                "cpa":round(sp/cv,2) if cv>0 else None,"cpc":round(sp/cl,2) if cl>0 else None,
+                "ctr":round(cl/imp*100,2) if imp>0 else None,"clicks":cl,"imp":imp,"adgroups":adgroups})
+        return rows
+    result={}
+    result["1"]=camps_period(df[(df["date"]>=ontem)&(df["date"]<=ontem)])
+    for n in [7,14,30]: result[str(n)]=camps_period(df[df["date"]>=hoje-pd.Timedelta(days=n-1)])
+    result["all"]=camps_period(df)
+    return result
+
+def google_keywords(df):
+    hoje=pd.Timestamp(date.today()); ontem=hoje-pd.Timedelta(days=1)
+    def kws_period(p):
+        ag=p.groupby("keyword").agg(spend=("spend","sum"),conversions=("conversions","sum"),
+            clicks=("clicks","sum")).reset_index()
+        ag=ag[ag["spend"]>0].sort_values("conversions",ascending=False).head(25)
+        rows=[]
+        for _,k in ag.iterrows():
+            mt=p[p["keyword"]==k["keyword"]]["match_type"]
+            rows.append({"n":str(k["keyword"]),"match":str(mt.mode()[0]) if len(mt)>0 else "",
+                "spend":round(float(k["spend"]),2),"conv":round(float(k["conversions"]),2),
+                "cpa":round(float(k["spend"]/k["conversions"]),2) if k["conversions"]>0 else None,
+                "cpc":round(float(k["spend"]/k["clicks"]),2) if k["clicks"]>0 else None,
+                "clicks":int(k["clicks"])})
+        return rows
+    result={}
+    result["1"]=kws_period(df[(df["date"]>=ontem)&(df["date"]<=ontem)])
+    for n in [7,14,30]: result[str(n)]=kws_period(df[df["date"]>=hoje-pd.Timedelta(days=n-1)])
+    result["all"]=kws_period(df)
+    return result
+
+def google_breakdowns(df):
+    print("  Lendo breakdowns Google...")
+    hoje=pd.Timestamp(date.today()); ontem=hoje-pd.Timedelta(days=1)
+    try:
+        df_a=pd.read_csv(URL_GOOGLE_AG)
+        df_a["date"]=pd.to_datetime(df_a["Date (Segment)"],errors="coerce")
+        df_a["spend"]=to_num(df_a["Cost (Spend, Amount Spent)"])
+        df_a["conv"]=to_num(df_a["All Conversions"])
+        df_a["clicks"]=to_num(df_a["Clicks"])
+        df_a["age"]=df_a["Age (Ad Group Criterion)"].map(AGE_MAP).fillna(df_a["Age (Ad Group Criterion)"].astype(str))
+        df_a=df_a.dropna(subset=["date"])
+    except Exception as e: print(f"  Aviso Age: {e}"); df_a=pd.DataFrame()
+    try:
+        df_g=pd.read_csv(URL_GOOGLE_GE)
+        df_g["date"]=pd.to_datetime(df_g["Date (Segment)"],errors="coerce")
+        df_g["spend"]=to_num(df_g["Cost (Spend, Amount Spent)"])
+        df_g["conv"]=to_num(df_g["All Conversions"])
+        df_g["gender"]=df_g["Gender (Ad Group Criterion)"].str.lower()
+        df_g=df_g.dropna(subset=["date"])
+    except Exception as e: print(f"  Aviso Gender: {e}"); df_g=pd.DataFrame()
+    AGE_ORDER=["18-24","25-34","35-44","45-54","55-64","65+"]
+    def bd(pa, pg):
+        aa=pa[pa["age"].isin(AGE_ORDER)].groupby("age").agg(spend=("spend","sum"),conv=("conv","sum")).reset_index()
+        aa["_o"]=aa["age"].apply(lambda x:AGE_ORDER.index(x) if x in AGE_ORDER else 99)
+        aa=aa[aa["spend"]>0].sort_values("_o")
+        aa["cpl"]=(aa["spend"]/aa["conv"]).where(aa["conv"]>0).round(2)
+        ga=pg[pg["gender"].isin(["female","male"])].groupby("gender").agg(spend=("spend","sum"),conv=("conv","sum")).reset_index()
+        ga=ga[ga["spend"]>0].sort_values("conv",ascending=False)
+        ga["cpl"]=(ga["spend"]/ga["conv"]).where(ga["conv"]>0).round(2)
+        def tl(df2,dim): return [{"n":str(r[dim]),"spend":round(float(r["spend"]),2),"conv":round(float(r["conv"]),2),"cpl":safe(r["cpl"])} for _,r in df2.iterrows()]
+        return {"age":tl(aa,"age"),"gender":tl(ga,"gender")}
+    result={}
+    def filt(dfa,dfg,start,end):
+        pa=dfa[(dfa["date"]>=start)&(dfa["date"]<=end)] if len(dfa)>0 else dfa
+        pg=dfg[(dfg["date"]>=start)&(dfg["date"]<=end)] if len(dfg)>0 else dfg
+        return bd(pa,pg)
+    result["1"]=filt(df_a,df_g,ontem,ontem)
+    for n in [7,14,30]: result[str(n)]=filt(df_a,df_g,hoje-pd.Timedelta(days=n-1),hoje)
+    result["all"]=bd(df_a,df_g)
+    return result
+
+# ══ SEO ═══════════════════════════════════════════════
+URL_SEO_KW = sheet_url("SEO-keyword")
+URL_SEO_PG = sheet_url("SEO-pages")
+URL_SEO_CO = sheet_url("SEO-country")
+
+def load_seo():
+    print("  Lendo SEO...")
+    # Keywords
+    df_kw=pd.read_csv(URL_SEO_KW)
+    kw_agg=df_kw.groupby("Dimension Query").agg(imp=("Search Analytics Impressions","sum"),clk=("Search Analytics Clicks","sum")).reset_index()
+    kw_agg=kw_agg.sort_values("imp",ascending=False).head(50)
+    keywords=[{"query":str(r["Dimension Query"]),"imp":int(r["imp"]),"clk":int(r["clk"])} for _,r in kw_agg.iterrows()]
+    print(f"     Keywords: {len(keywords)}")
+    # Pages
+    df_pg=pd.read_csv(URL_SEO_PG)
+    pg_agg=df_pg.groupby("Dimension Page URL").agg(imp=("Search Analytics Impressions","sum"),clk=("Search Analytics Clicks","sum")).reset_index()
+    pg_agg=pg_agg.sort_values("clk",ascending=False).head(30)
+    pages=[{"url":str(r["Dimension Page URL"]),"imp":int(r["imp"]),"clk":int(r["clk"])} for _,r in pg_agg.iterrows()]
+    print(f"     Páginas: {len(pages)}")
+    # Countries (via SEO-country que tem date + url + imp + clk)
+    df_co=pd.read_csv(URL_SEO_CO)
+    # Agrupar por país — extrair do URL o domínio/path não dá país, então agrupamos por URL base
+    # Como não há coluna de país explícita no SEO-country, vamos usar como diário
+    df_co["date"]=pd.to_datetime(df_co["Dimension Date"],errors="coerce")
+    co_daily=df_co.groupby("date").agg(imp=("Search Analytics Impressions","sum"),clk=("Search Analytics Clicks","sum")).reset_index().sort_values("date")
+    daily={"days":[r["date"].strftime("%d/%m") for _,r in co_daily.iterrows()],
+           "impressions":[int(r["imp"]) for _,r in co_daily.iterrows()],
+           "clicks":[int(r["clk"]) for _,r in co_daily.iterrows()]}
+    print(f"     Diário SEO: {len(daily['days'])} dias")
+    # Países — vêm da aba SEO-pages que tem Dimension Country
+    if "Dimension Country" in df_pg.columns:
+        co_agg=df_pg.groupby("Dimension Country").agg(
+            imp=("Search Analytics Impressions","sum"),
+            clk=("Search Analytics Clicks","sum")).reset_index()
+        co_agg=co_agg[co_agg["imp"]>0].sort_values("imp",ascending=False).head(20)
+        countries=[{"country":str(r["Dimension Country"]),"imp":int(r["imp"]),"clk":int(r["clk"])} for _,r in co_agg.iterrows()]
+    else:
+        countries=[]
+    print(f"     Países: {len(countries)}")
+    return daily, keywords, pages, countries
 def load_pesquisa():
     print("  Lendo pesquisa..."); return pd.read_csv(sheet_url("Pesquisa"))
 
@@ -364,8 +555,11 @@ def replace_js_const(html, name, value):
     if not found[0]: print(f"  AVISO: não encontrou const {name}")
     return new_html
 
-def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, pes):
+def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, pes,
+               g_daily, g_kpis, g_camps, g_kw, g_bd,
+               seo_daily, seo_kw, seo_pages, seo_countries):
     html=Path(tpl).read_text(encoding="utf-8")
+    # Meta
     html=replace_js_const(html,"META_KPIS",     meta_k)
     html=replace_js_const(html,"META_DAILY",     meta_d)
     html=replace_js_const(html,"META_DAILY_CAMPS", meta_dc)
@@ -373,9 +567,18 @@ def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, pes):
     html=replace_js_const(html,"META_TABLES",    meta_t)
     html=replace_js_const(html,"META_BD",        meta_bd)
     html=replace_js_const(html,"PESQUISA", pes if USAR_PESQUISA else False)
-    from datetime import timezone, timedelta
     html=replace_js_const(html,"DATA_GERACAO", date.today().strftime("%Y-%m-%d"))
-    # Suporte a CPL_BOM ou CPA_BOM (retrocompatibilidade)
+    # Google
+    html=replace_js_const(html,"GOOGLE_DAILY",  g_daily)
+    html=replace_js_const(html,"GOOGLE_KPIS",   g_kpis)
+    html=replace_js_const(html,"GOOGLE_CAMPS",  g_camps)
+    html=replace_js_const(html,"GOOGLE_KW",     g_kw)
+    html=replace_js_const(html,"GOOGLE_BD",     g_bd)
+    # SEO
+    html=replace_js_const(html,"SEO_DAILY",     seo_daily)
+    html=replace_js_const(html,"SEO_KEYWORDS",  seo_kw)
+    html=replace_js_const(html,"SEO_PAGES",     seo_pages)
+    html=replace_js_const(html,"SEO_COUNTRIES", seo_countries)
     _cpl_bom   = globals().get("CPL_BOM",   globals().get("CPA_BOM",   5.0))
     _cpl_medio = globals().get("CPL_MEDIO", globals().get("CPA_MEDIO", 10.0))
     for k,v in [("LANCAMENTO_COD",f"'{LANCAMENTO_COD}'"),("NOME_CLIENTE",f"'{NOME_CLIENTE}'"),
@@ -407,6 +610,29 @@ def main():
     total_leads=m_k["lct"]["leads"] if LANCAMENTO_COD else m_k["all"]["leads"]
     print(f"  ✓ {total_leads} leads | R$ {m_k['lct']['spend']:,.2f} invest.")
 
+    print("\n[GOOGLE ADS]")
+    try:
+        df_google=load_google()
+        g_daily=google_daily(df_google)
+        g_kpis=google_kpis(df_google)
+        g_camps=google_camps(df_google)
+        g_kw=google_keywords(df_google)
+        g_bd=google_breakdowns(df_google)
+        print(f"  ✓ {df_google['conversions'].sum():.0f} conv. | R$ {df_google['spend'].sum():,.2f} invest.")
+    except Exception as e:
+        print(f"  Aviso Google: {e}")
+        g_daily={"days":[],"spend":[],"conversions":[],"cpa":[],"ctr":[],"cpc":[]}
+        g_kpis={}; g_camps={}; g_kw={}; g_bd={}
+
+    print("\n[SEO]")
+    try:
+        seo_daily,seo_kw,seo_pages,seo_countries=load_seo()
+        print(f"  ✓ {sum(seo_daily['impressions'])} impressões | {sum(seo_daily['clicks'])} cliques")
+    except Exception as e:
+        print(f"  Aviso SEO: {e}")
+        seo_daily={"days":[],"impressions":[],"clicks":[]}
+        seo_kw=[]; seo_pages=[]; seo_countries=[]
+
     print("\n[PESQUISA]")
     if USAR_PESQUISA:
         df_pes=load_pesquisa()
@@ -419,7 +645,9 @@ def main():
     print("\n[HTML]")
     if not Path(TEMPLATE_FILE).exists():
         print(f"  ERRO: {TEMPLATE_FILE} não encontrado"); return
-    html=inject_all(TEMPLATE_FILE,m_k,m_d,m_dc,m_raw,m_t,m_bd,pes)
+    html=inject_all(TEMPLATE_FILE,m_k,m_d,m_dc,m_raw,m_t,m_bd,pes,
+                    g_daily,g_kpis,g_camps,g_kw,g_bd,
+                    seo_daily,seo_kw,seo_pages,seo_countries)
     Path(OUTPUT_FILE).write_text(html,encoding="utf-8")
     print(f"  ✓ {OUTPUT_FILE} ({len(html)//1024}KB)")
 
