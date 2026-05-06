@@ -268,8 +268,17 @@ details.desk-only{display:block!important;}
       <div class="funnel-card mb14"><div class="funnel-title">Funil de Captação · All Conversions</div><div class="funnel-steps" id="funnelSteps"></div></div>
       <!-- Gráfico Leads · Investimento · CPL -->
       <div class="cc mb14">
-        <div class="cc-t">Leads Diários & Investimento</div>
-        <div class="cc-s">Conversões (FB Pixel Custom + Messaging + Leads + Contact) · Invest. (linha verde) · CPL (linha preta tracejada)</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+          <div>
+            <div class="cc-t" id="chMainTitle">Leads Diários & Investimento</div>
+            <div class="cc-s" id="chMainSub">Conversões · Invest. (linha verde) · CPL (linha preta tracejada)</div>
+          </div>
+          <div style="display:flex;gap:3px;background:var(--bg);padding:3px;border-radius:8px;border:1px solid var(--border);flex-shrink:0;">
+            <button id="modeConv" class="pb active" onclick="setChartMode('conversoes',this)" style="font-size:10px;padding:3px 9px">🎯 Conversões</button>
+            <button id="modeRec"  class="pb" onclick="setChartMode('reconhecimento',this)" style="font-size:10px;padding:3px 9px">📢 Alcance</button>
+            <button id="modeEng"  class="pb" onclick="setChartMode('engajamento',this)" style="font-size:10px;padding:3px 9px">💬 Engajamento</button>
+          </div>
+        </div>
         <div class="cw" style="height:210px"><canvas id="chMetaMain"></canvas></div>
       </div>
       <!-- Campanhas -->
@@ -359,6 +368,7 @@ const CPM_MEDIO=12.0;
 
 // ═══ ESTADO ═══
 let filtroLct=true, periodDays=30, dateI=null, dateF=null, showLabels=true, labelSize=8;
+let chartMode='conversoes'; // 'conversoes' | 'reconhecimento' | 'engajamento'
 let pesFilters={};
 
 // ═══ UTILS ═══
@@ -550,20 +560,47 @@ function renderMeta(){
   funnelKpis.cpl=ld2>0?r2(spMK/ld2):null;
   setTimeout(()=>buildFunnel(funnelKpis),30);
 
-  // Gráfico Leads · Investimento · CPL
+  // Gráfico — modo dinâmico: conversoes | reconhecimento | engajamento
   dc('chMetaMain');
+  const MODES={
+    conversoes:{
+      title:'Leads Diários & Investimento',
+      sub:'Conversões · Invest. (linha verde) · CPL (linha preta tracejada)',
+      barLabel:'Leads', barData:md.leads, barColor:'rgba(59,130,246,.7)', barTick:v=>fN(v),
+      lineLabel:'CPL',  lineData:md.cpl,  lineFmt:v=>v!=null?'R$'+v.toFixed(2):null,
+      y1Color:'#3b82f6',
+    },
+    reconhecimento:{
+      title:'Impressões & Investimento',
+      sub:'Impressões (barras roxas) · Invest. (linha verde) · CPM (linha preta tracejada)',
+      barLabel:'Impressões', barData:md.impressions, barColor:'rgba(139,92,246,.7)', barTick:v=>fN(v),
+      lineLabel:'CPM',       lineData:md.cpm,         lineFmt:v=>v!=null?'R$'+v.toFixed(2):null,
+      y1Color:'#8b5cf6',
+    },
+    engajamento:{
+      title:'Engajamentos & Investimento',
+      sub:'Engajamentos (barras laranja) · Invest. (linha verde) · Custo/Eng. (linha preta tracejada)',
+      barLabel:'Engajamentos', barData:md.engagement, barColor:'rgba(249,115,22,.7)', barTick:v=>fN(v),
+      lineLabel:'CPE',         lineData:md.cpe,        lineFmt:v=>v!=null?'R$'+v.toFixed(2):null,
+      y1Color:'#f97316',
+    },
+  };
+  const M=MODES[chartMode]||MODES.conversoes;
+  // Atualizar título e subtítulo
+  const tEl=document.getElementById('chMainTitle'); if(tEl) tEl.textContent=M.title;
+  const sEl=document.getElementById('chMainSub');   if(sEl) sEl.textContent=M.sub;
   CH['chMetaMain']=new Chart(document.getElementById('chMetaMain'),{
     data:{labels:md.days,datasets:[
-      {label:'Leads',data:md.leads,backgroundColor:'rgba(59,130,246,.7)',borderRadius:3,type:'bar',yAxisID:'y1',
-       datalabels:{...makeDatalabels('#3b82f6','',v=>v!=null?fN(v):null),display:ctx=>showLabels}},
+      {label:M.barLabel,data:M.barData,backgroundColor:M.barColor,borderRadius:3,type:'bar',yAxisID:'y1',
+       datalabels:{...makeDatalabels(M.y1Color,'',v=>v!=null?M.barTick(v):null),display:ctx=>showLabels}},
       {label:'Invest.',data:md.spend,borderColor:'#059669',backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,type:'line',spanGaps:true,datalabels:{display:false}},
-      {label:'CPL',data:md.cpl,borderColor:'#111',borderDash:[5,3],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:1.5,type:'line',yAxisID:'y2',spanGaps:true,
-       datalabels:{display:ctx=>showLabels,color:'#333',font:{size:labelSize,weight:'bold'},formatter:v=>v!=null?'R$'+v.toFixed(2):null,anchor:'end',align:'top',offset:2,clip:false}},
+      {label:M.lineLabel,data:M.lineData,borderColor:'#111',borderDash:[5,3],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:1.5,type:'line',yAxisID:'y2',spanGaps:true,
+       datalabels:{display:ctx=>showLabels,color:'#333',font:{size:labelSize,weight:'bold'},formatter:M.lineFmt,anchor:'end',align:'top',offset:2,clip:false}},
     ]},
     options:{...bo(),scales:{
       x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},
       y:{ticks:{color:TXT(),font:bf,callback:v=>'R$'+v.toLocaleString()},grid:{color:GRID()},min:0},
-      y1:{position:'right',ticks:{color:'#3b82f6',font:bf},grid:{display:false},grace:'20%'},
+      y1:{position:'right',ticks:{color:M.y1Color,font:bf},grid:{display:false},grace:'20%'},
       y2:{position:'right',ticks:{color:'#555',font:bf,callback:v=>'R$'+v.toFixed(0)},grid:{display:false},offset:true,min:0},
     }}
   });
@@ -571,6 +608,13 @@ function renderMeta(){
   buildTable('tCamps', mt?.camps,'Campanha');
   renderAds(mt?.ads);
   renderSeg();
+}
+
+function setChartMode(mode, btn){
+  chartMode=mode;
+  document.querySelectorAll('#modeConv,#modeRec,#modeEng').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMeta();
 }
 
 function getPeriodKey(){
@@ -1007,7 +1051,7 @@ function getMDforMeta(){
   if(selected.length===1) return selected[0];
   const ref=applyPeriod(md);
   const out={days:ref.days};
-  ['spend','impressions','link_clicks','page_view','leads'].forEach(k=>{
+  ['spend','impressions','link_clicks','page_view','leads','engagement'].forEach(k=>{
     out[k]=ref.days.map(day=>selected.reduce((sum,s)=>{const i=s.days?.indexOf(day);return sum+(i>=0?(s[k]?.[i]||0):0);},0));
   });
   out.ctr=out.days.map((_,i)=>out.impressions[i]>0?r2(out.link_clicks[i]/out.impressions[i]*100):null);
@@ -1015,6 +1059,7 @@ function getMDforMeta(){
   out.tx_conv=out.days.map((_,i)=>out.page_view[i]>0?r2(out.leads[i]/out.page_view[i]*100):null);
   out.cpl=out.days.map((_,i)=>out.leads[i]>0?r2(out.spend[i]/out.leads[i]):null);
   out.cpm=out.days.map((_,i)=>out.impressions[i]>0?r2(out.spend[i]/out.impressions[i]*1000):null);
+  out.cpe=out.days.map((_,i)=>out.engagement[i]>0?r2(out.spend[i]/out.engagement[i]):null);
   return out;
 }
 
