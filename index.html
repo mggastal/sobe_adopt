@@ -237,9 +237,9 @@ details.desk-only{display:block!important;}
       </div>
       <a href="#" class="sb-item" id="sbSeo" onclick="goPage('seo',this);return false;"><span class="ico">📊</span>Visão Geral</a>
     </div>
+    <a href="#" class="sb-item" id="sbPesquisa" style="display:none" onclick="goPage('pesquisa',this);return false;"><span class="ico">💬</span>Pesquisa</a>
   </div>
   <div class="sb-footer"><span id="sbAtual">--/--/---- · via planilha</span></div>
-  <a href="#" class="sb-item" id="sbPesquisa" style="margin:0 10px 8px" onclick="goPage('pesquisa',this);return false;"><span class="ico">💬</span>Pesquisa</a>
 </aside>
 
 <main class="main">
@@ -1479,16 +1479,15 @@ function buildPizzas(){
 
 // ═══ GOOGLE ADS ═══
 function getGooglePeriodData(){
-  // Retorna {camps, kws} para o período/datas selecionadas
   const key=getPeriodKey();
   // Períodos fixos — usar pré-calculado
-  if(key && key!=='libre'){
+  if(key){
     return {
-      camps: (GOOGLE_CAMPS&&GOOGLE_CAMPS[key])||[],
-      kws:   (GOOGLE_KW&&GOOGLE_KW[key])||[],
+      camps: (GOOGLE_CAMPS&&GOOGLE_CAMPS[key])||(GOOGLE_CAMPS&&GOOGLE_CAMPS['all'])||[],
+      kws:   (GOOGLE_KW&&GOOGLE_KW[key])||(GOOGLE_KW&&GOOGLE_KW['all'])||[],
     };
   }
-  // Datas livres ou ontem — calcular do raw
+  // Datas livres (key===null) — calcular do raw
   if(!GOOGLE_RAW?.length) return {camps:(GOOGLE_CAMPS&&GOOGLE_CAMPS['all'])||[], kws:(GOOGLE_KW&&GOOGLE_KW['all'])||[]};
   const hoje=getHoje();
   const filtered=GOOGLE_RAW.filter(r=>{
@@ -2141,10 +2140,14 @@ window.addEventListener('resize', ajustarPaddingContent);
     const lb2=document.getElementById('lctBar'); if(lb2) lb2.style.display='flex';
     const btnOn=document.getElementById('btnLctOn'); if(btnOn) btnOn.textContent=LANCAMENTO_COD;
   }
-  // Pesquisa: esconder menu e aba se PESQUISA=false
-  if(!PESQUISA||PESQUISA===false||PESQUISA===null){
-    const sbP=document.getElementById('sbPesquisa'); if(sbP) sbP.style.display='none';
-    const pgP=document.getElementById('page-pesquisa'); if(pgP) pgP.style.display='none';
+  // Pesquisa: mostrar só se ativa
+  const sbP=document.getElementById('sbPesquisa');
+  const pgP=document.getElementById('page-pesquisa');
+  if(PESQUISA&&PESQUISA!==false){
+    if(sbP) sbP.style.display='flex';
+  } else {
+    if(sbP) sbP.style.display='none';
+    if(pgP) pgP.style.display='none';
   }
   renderMeta();
   ajustarPaddingContent();
