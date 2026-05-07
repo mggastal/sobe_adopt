@@ -446,7 +446,25 @@ def google_keywords(df):
     result["all"]=kws_period(df)
     return result
 
-def google_breakdowns(df):
+def google_raw(df):
+    """Raw diário por campanha/adgroup/keyword — usado para filtros de data livre no HTML."""
+    rows=[]
+    agg=df.groupby(["date","campaign","adgroup","keyword","match_type"]).agg(
+        spend=("spend","sum"),conversions=("conversions","sum"),
+        clicks=("clicks","sum"),impressions=("impressions","sum")
+    ).reset_index()
+    for _,r in agg.iterrows():
+        rows.append({
+            "d": r["date"].strftime("%d/%m"),
+            "c": str(r["campaign"]), "a": str(r["adgroup"]),
+            "kw": str(r["keyword"]), "mt": str(r["match_type"]),
+            "sp": round(float(r["spend"]),2),
+            "cv": round(float(r["conversions"]),2),
+            "cl": int(r["clicks"]), "imp": int(r["impressions"])
+        })
+    return rows
+
+
     print("  Lendo breakdowns Google...")
     hoje=pd.Timestamp(date.today()); ontem=hoje-pd.Timedelta(days=1)
     try:
@@ -617,7 +635,7 @@ def replace_js_const(html, name, value):
     return new_html
 
 def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, meta_month, pes,
-               g_daily, g_kpis, g_camps, g_kw, g_bd, g_month,
+               g_daily, g_kpis, g_camps, g_kw, g_bd, g_month, g_raw,
                seo_daily, seo_kw, seo_pages, seo_countries):
     html=Path(tpl).read_text(encoding="utf-8")
     # Meta
@@ -637,6 +655,7 @@ def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, meta_m
     html=replace_js_const(html,"GOOGLE_KW",      g_kw)
     html=replace_js_const(html,"GOOGLE_BD",      g_bd)
     html=replace_js_const(html,"GOOGLE_MONTHLY", g_month)
+    html=replace_js_const(html,"GOOGLE_RAW",     g_raw)
     # SEO
     html=replace_js_const(html,"SEO_DAILY",     seo_daily)
     html=replace_js_const(html,"SEO_KEYWORDS",  seo_kw)
@@ -683,12 +702,14 @@ def main():
         g_kw=google_keywords(df_google)
         g_bd=google_breakdowns(df_google)
         g_month=google_monthly(df_google)
-        print(f"  ✓ {df_google['conversions'].sum():.0f} conv. | R$ {df_google['spend'].sum():,.2f} invest.")
+        g_raw=google_raw(df_google)
+        print(f"  ✓ {df_google['conversions'].sum():.0f} conv. | $ {df_google['spend'].sum():,.2f} invest.")
     except Exception as e:
         print(f"  Aviso Google: {e}")
         g_daily={"days":[],"spend":[],"conversions":[],"cpa":[],"ctr":[],"cpc":[]}
         g_kpis={}; g_camps={}; g_kw={}; g_bd={}
         g_month={"lbl":[],"totalS":[],"totalConv":[],"cpaG":[],"cpcG":[],"ctrG":[],"camps":[]}
+        g_raw=[]
 
     print("\n[SEO]")
     try:
@@ -712,7 +733,7 @@ def main():
     if not Path(TEMPLATE_FILE).exists():
         print(f"  ERRO: {TEMPLATE_FILE} não encontrado"); return
     html=inject_all(TEMPLATE_FILE,m_k,m_d,m_dc,m_raw,m_t,m_bd,m_month,pes,
-                    g_daily,g_kpis,g_camps,g_kw,g_bd,g_month,
+                    g_daily,g_kpis,g_camps,g_kw,g_bd,g_month,g_raw,
                     seo_daily,seo_kw,seo_pages,seo_countries)
     Path(OUTPUT_FILE).write_text(html,encoding="utf-8")
     print(f"  ✓ {OUTPUT_FILE} ({len(html)//1024}KB)")
