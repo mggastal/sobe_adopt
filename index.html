@@ -753,8 +753,8 @@ function renderMeta(){
       {label:M.barLabel,data:M.barData,backgroundColor:M.barColor,borderRadius:3,type:'bar',yAxisID:'y1',
        datalabels:{...makeDatalabels(M.y1Color,'',v=>v!=null?M.barTick(v):null),display:ctx=>showLabels}},
       {label:'Invest.',data:md.spend,borderColor:'#059669',backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,type:'line',spanGaps:true,datalabels:{display:false}},
-      {label:M.lineLabel,data:M.lineData,borderColor:'#111',borderDash:[5,3],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:1.5,type:'line',yAxisID:'y2',spanGaps:true,
-       datalabels:{display:ctx=>showLabels,color:'#333',font:{size:labelSize,weight:'bold'},formatter:M.lineFmt,anchor:'end',align:'top',offset:2,clip:false}},
+      {label:M.lineLabel,data:M.lineData,borderColor:DARK()?'#fff':'#111',borderDash:[5,3],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:1.5,type:'line',yAxisID:'y2',spanGaps:true,
+       datalabels:{display:ctx=>showLabels,color:DARK()?'#fff':'#111',font:{size:labelSize,weight:'bold'},formatter:M.lineFmt,anchor:'end',align:'top',offset:2,clip:false}},
     ]},
     options:{...bo(),scales:{
       x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},
@@ -1375,7 +1375,7 @@ function renderDiarioCharts(){
              const tot=ctx.dataset.data.filter(x=>x!=null).length;
              return m.fmt?m.fmt(v):v.toFixed(1)+m.suffix;
            },anchor:'top',align:'top',offset:2,clip:false}},
-        {label:'Média período',data:avgLine,borderColor:'#111',borderDash:[4,4],backgroundColor:'transparent',
+        {label:'Média período',data:avgLine,borderColor:DARK()?'#fff':'#111',borderDash:[4,4],backgroundColor:'transparent',
          pointRadius:0,borderWidth:1.5,spanGaps:true,datalabels:{display:false}},
       ]},
       options:{...bo(),scales:{
@@ -1560,8 +1560,8 @@ function renderGoogle(){
         {label:'Conversões',data:convInt,backgroundColor:'rgba(234,179,8,.75)',borderRadius:3,type:'bar',yAxisID:'y1',
          datalabels:{...makeDatalabels('#ca8a04','',v=>v!=null?fN(v):null),display:ctx=>showLabels}},
         {label:'Invest.',data:gd.spend,borderColor:'#059669',backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,type:'line',spanGaps:true,datalabels:{display:false}},
-        {label:'CPA',data:gd.cpa,borderColor:'#111',borderDash:[5,3],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:1.5,type:'line',yAxisID:'y2',spanGaps:true,
-         datalabels:{display:ctx=>showLabels,color:'#333',font:{size:labelSize,weight:'bold'},formatter:v=>v!=null?'$'+v.toFixed(2):null,anchor:'end',align:'top',offset:2,clip:false}},
+        {label:'CPA',data:gd.cpa,borderColor:DARK()?'#fff':'#111',borderDash:[5,3],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:1.5,type:'line',yAxisID:'y2',spanGaps:true,
+         datalabels:{display:ctx=>showLabels,color:DARK()?'#fff':'#111',font:{size:labelSize,weight:'bold'},formatter:v=>v!=null?'$'+v.toFixed(2):null,anchor:'end',align:'top',offset:2,clip:false}},
       ]},
       options:{...bo(),scales:{
         x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},
