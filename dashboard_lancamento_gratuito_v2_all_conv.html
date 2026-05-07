@@ -504,6 +504,7 @@ const GOOGLE_CAMPS   = null;
 const GOOGLE_KW      = null;
 const GOOGLE_BD      = null;
 const GOOGLE_MONTHLY = null;
+const GOOGLE_RAW     = null;
 // SEO
 const SEO_DAILY      = null;
 const SEO_KEYWORDS   = null;
@@ -1478,7 +1479,63 @@ function buildPizzas(){
 }
 
 // ═══ GOOGLE ADS ═══
-function renderGoogle(){
+function getGooglePeriodData(){
+  // Retorna {camps, kws} para o período/datas selecionadas
+  const key=getPeriodKey();
+  // Períodos fixos — usar pré-calculado
+  if(key && key!=='libre'){
+    return {
+      camps: (GOOGLE_CAMPS&&GOOGLE_CAMPS[key])||[],
+      kws:   (GOOGLE_KW&&GOOGLE_KW[key])||[],
+    };
+  }
+  // Datas livres ou ontem — calcular do raw
+  if(!GOOGLE_RAW?.length) return {camps:(GOOGLE_CAMPS&&GOOGLE_CAMPS['all'])||[], kws:(GOOGLE_KW&&GOOGLE_KW['all'])||[]};
+  const hoje=getHoje();
+  const filtered=GOOGLE_RAW.filter(r=>{
+    const dt=parseDayStr(r.d);
+    if(periodDays>0){
+      const fim=new Date(hoje); if(periodDays===1) fim.setDate(fim.getDate()-1); fim.setHours(23,59,59);
+      const ini=new Date(fim); ini.setDate(ini.getDate()-(periodDays===1?0:periodDays-1)); ini.setHours(0,0,0,0);
+      if(dt<ini||dt>fim) return false;
+    }
+    if(dateI&&dt<dateI) return false;
+    if(dateF&&dt>dateF) return false;
+    return true;
+  });
+  if(!filtered.length) return {camps:[],kws:[]};
+  // Agregar campanhas → adgroups → keywords
+  const campMap={}, adgMap={}, kwMap={};
+  filtered.forEach(r=>{
+    const ck=r.c;
+    if(!campMap[ck]) campMap[ck]={n:r.c,spend:0,conv:0,clicks:0,imp:0,adgroups:{}};
+    campMap[ck].spend+=r.sp; campMap[ck].conv+=r.cv; campMap[ck].clicks+=r.cl; campMap[ck].imp+=r.imp;
+    const ak=r.c+'|||'+r.a;
+    if(!campMap[ck].adgroups[ak]) campMap[ck].adgroups[ak]={n:r.a,spend:0,conv:0,clicks:0,imp:0,keywords:{}};
+    const ag=campMap[ck].adgroups[ak];
+    ag.spend+=r.sp; ag.conv+=r.cv; ag.clicks+=r.cl; ag.imp+=r.imp;
+    const kwk=ak+'|||'+r.kw;
+    if(!ag.keywords[kwk]) ag.keywords[kwk]={n:r.kw,match:r.mt,spend:0,conv:0,clicks:0,imp:0};
+    const kw=ag.keywords[kwk];
+    kw.spend+=r.sp; kw.conv+=r.cv; kw.clicks+=r.cl; kw.imp+=r.imp;
+    // top keywords globais
+    const gk=r.kw+'|||'+r.mt;
+    if(!kwMap[gk]) kwMap[gk]={n:r.kw,match:r.mt,spend:0,conv:0,clicks:0,imp:0};
+    kwMap[gk].spend+=r.sp; kwMap[gk].conv+=r.cv; kwMap[gk].clicks+=r.cl; kwMap[gk].imp+=r.imp;
+  });
+  function calcG(o){ return{...o,spend:r2(o.spend),conv:r2(o.conv),cpa:o.conv>0?r2(o.spend/o.conv):null,cpc:o.clicks>0?r2(o.spend/o.clicks):null,ctr:o.imp>0?r2(o.clicks/o.imp*100):null}; }
+  const camps=Object.values(campMap).map(c=>{
+    const adgroups=Object.values(c.adgroups).map(ag=>{
+      const keywords=Object.values(ag.keywords).map(calcG).sort((a,b)=>b.conv-a.conv);
+      return {...calcG(ag),keywords};
+    }).sort((a,b)=>b.conv-a.conv);
+    return {...calcG(c),adgroups};
+  }).sort((a,b)=>b.conv-a.conv);
+  const kws=Object.values(kwMap).map(calcG).sort((a,b)=>b.conv-a.conv).slice(0,25);
+  return {camps,kws};
+}
+
+
   if(!GOOGLE_DAILY||!GOOGLE_KPIS) return;
 
   const key=getPeriodKey()||'all';
@@ -1517,8 +1574,8 @@ function renderGoogle(){
     });
   }
 
-  // Tabela campanhas — expansível com grupos e keywords
-  const camps=(GOOGLE_CAMPS&&GOOGLE_CAMPS[key])||[];
+  // Campanhas e keywords — respeita datas livres via raw
+  const {camps, kws}=getGooglePeriodData();
   const gc=document.getElementById('gCamps');
   const MATCH_ICON={'EXACT':'[E]','PHRASE':'"F"','BROAD':'~A~'};
   if(!camps.length){gc.innerHTML='<div style="padding:12px;color:var(--muted);font-size:12px">Sem dados no período</div>';}
@@ -1560,8 +1617,7 @@ function renderGoogle(){
     });
   }
 
-  // Top Keywords
-  const kws=(GOOGLE_KW&&GOOGLE_KW[key])||[];
+  // Top Keywords — já vêm de getGooglePeriodData
   const gk2=document.getElementById('gKeywords');
   if(!kws.length){gk2.innerHTML='<div style="padding:12px;color:var(--muted);font-size:12px">Sem dados</div>';}
   else{
