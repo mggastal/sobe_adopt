@@ -464,7 +464,7 @@ def google_raw(df):
         })
     return rows
 
-
+def google_breakdowns(df):
     print("  Lendo breakdowns Google...")
     hoje=pd.Timestamp(date.today()); ontem=hoje-pd.Timedelta(days=1)
     try:
@@ -757,6 +757,13 @@ def main():
     html=inject_all(TEMPLATE_FILE,m_k,m_d,m_dc,m_raw,m_t,m_bd,m_month,pes,
                     g_daily,g_kpis,g_camps,g_kw,g_bd,g_month,g_raw,
                     seo_daily,seo_kw,seo_pages,seo_countries)
+    # Diagnóstico — verificar se constantes foram injetadas
+    checks = ["GOOGLE_DAILY","GOOGLE_KPIS","GOOGLE_CAMPS","SEO_DAILY","META_MONTHLY"]
+    for c in checks:
+        idx = html.find(f"const {c} =")
+        snippet = html[idx+len(f"const {c} ="):idx+len(f"const {c} =")+30] if idx>=0 else "NÃO ENCONTRADO"
+        status = "✓" if "null" not in snippet[:6] and snippet.strip()[:1] in ('{','[','"','0','1','2','3','4','5','6','7','8','9','t','f') else "✗ null"
+        print(f"  {status} {c}: {snippet.strip()[:40]}")
     Path(OUTPUT_FILE).write_text(html,encoding="utf-8")
     print(f"  ✓ {OUTPUT_FILE} ({len(html)//1024}KB)")
 
