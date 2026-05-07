@@ -210,8 +210,7 @@ details.desk-only{display:block!important;}
 
 <aside class="sb" id="sidebar">
   <div class="sb-logo">
-    <div class="logo-box" id="logoBox">C</div>
-    <div><div class="logo-name" id="sbNome">Dashboard</div></div>
+    <img src="logo.png" alt="Logo" style="width:160px;height:40px;object-fit:contain;object-position:left center;">
   </div>
   <div class="sb-section">
     <div class="sb-platform-group">
@@ -2126,8 +2125,6 @@ window.addEventListener('resize', ajustarPaddingContent);
 
 // ═══ INIT ═══
 (function(){
-  const lb=document.getElementById('logoBox');
-  if(lb){lb.textContent=LOGO_LETRA;lb.style.background=`linear-gradient(135deg,${COR_ACENTO},${COR_ACENTO}cc)`;}
   const sbNome=document.getElementById('sbNome'); if(sbNome) sbNome.textContent=NOME_CLIENTE;
   const pageTab=document.getElementById('pageTab'); if(pageTab) pageTab.textContent=`${NOME_CLIENTE} — Dashboard`;
   document.documentElement.style.setProperty('--accent',COR_ACENTO);
