@@ -8,6 +8,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
+/* ── gate ── */
+#_gx{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a0f1e 0%,#111827 100%);}
+._gc{width:100%;max-width:380px;padding:40px 36px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;backdrop-filter:blur(12px);}
+._gl{display:block;margin:0 auto 28px;max-width:160px;height:40px;object-fit:contain;}
+._gf{display:flex;flex-direction:column;gap:12px;}
+._gi{width:100%;padding:11px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#f0f4ff;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border .15s;}
+._gi:focus{border-color:rgba(255,255,255,.35);}
+._gi::placeholder{color:rgba(255,255,255,.25);}
+._gb{width:100%;padding:11px;border-radius:9px;border:none;background:var(--_ac,#02C028);color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;transition:opacity .15s;}
+._gb:hover{opacity:.88;}
+._ge{font-size:11px;color:#ef4444;text-align:center;min-height:16px;margin-top:2px;}
+#_gx.hidden{display:none!important;}
 :root{--bg:#f0f2f7;--surface:#fff;--surface2:#f7f8fc;--border:rgba(0,0,0,.07);--text:#0f1523;--muted:#6b7280;--muted2:#9ca3af;--accent:#e11d48;--sh:0 1px 4px rgba(0,0,0,.06);--r:12px;}
 [data-theme="dark"]{--bg:#0a0f1e;--surface:#111827;--surface2:#1a2236;--border:rgba(255,255,255,.08);--text:#f0f4ff;--muted:#8b95a9;--muted2:#5a6478;--sh:0 1px 4px rgba(0,0,0,.3);}
 [data-theme="dark"] .sb{background:#060b14;}
@@ -205,6 +217,18 @@ details.desk-only{display:block!important;}
 </style>
 </head>
 <body>
+<!-- gate -->
+<div id="_gx">
+  <div class="_gc">
+    <img src="logo.png" alt="" class="_gl" onerror="this.style.display='none'">
+    <div class="_gf">
+      <input class="_gi" id="_gu" type="text" placeholder="Usuário" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('_gp').focus()">
+      <input class="_gi" id="_gp" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')_gchk()">
+      <button class="_gb" onclick="_gchk()">Entrar</button>
+      <div class="_ge" id="_gm"></div>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="overlay" onclick="closeSb()"></div>
 <div class="app">
 
@@ -2152,6 +2176,39 @@ window.addEventListener('resize', ajustarPaddingContent);
   renderMeta();
   ajustarPaddingContent();
 })();
+
+// ═══ AUTH ═══
+(function(){
+  const _sk='_dsx';
+  if(sessionStorage.getItem(_sk)==='1'){document.getElementById('_gx').classList.add('hidden');return;}
+  const _btn=document.querySelector('._gb');
+  if(_btn) _btn.style.background=COR_ACENTO||'#02C028';
+})();
+
+async function _gchk(){
+  const _u=document.getElementById('_gu').value.trim();
+  const _p=document.getElementById('_gp').value;
+  const _m=document.getElementById('_gm');
+  if(!_u||!_p){_m.textContent='Preencha todos os campos';return;}
+  const _enc=new TextEncoder();
+  async function _h(s){
+    const b=await crypto.subtle.digest('SHA-256',_enc.encode(s));
+    return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+  }
+  const _hu=await _h(_u);
+  const _hc=await _h(_u+_p);
+  const _C1='e2a530e251d3675034d23f5c5f87f54ec3182a088ba7d13350824794f8e6b76e';
+  const _C2='45831ca891a4ecbd5168ed617bffb81fa067494e97c5d91de4510a846f65bf79';
+  if(_hu===_C1&&_hc===_C2){
+    sessionStorage.setItem('_dsx','1');
+    document.getElementById('_gx').classList.add('hidden');
+    _m.textContent='';
+  } else {
+    _m.textContent='Usuário ou senha incorretos';
+    document.getElementById('_gp').value='';
+    document.getElementById('_gp').focus();
+  }
+}
 </script>
 </body>
 </html>
