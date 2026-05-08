@@ -223,11 +223,11 @@ details.desk-only{display:block!important;}
     <img src="logo.png" alt="" class="_gl" onerror="this.style.display='none'">
     <div style="text-align:center;margin-bottom:24px">
       <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:#fff;letter-spacing:.5px">Dashboard AdOpt</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:3px">Inteligência de Marketing</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:3px">Analytics Platform</div>
     </div>
     <div class="_gf">
-      <input class="_gi" id="_gu" type="text" placeholder="Usuário" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('_gp').focus()">
-      <input class="_gi" id="_gp" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')_gchk()">
+      <input class="_gi" id="_gu" type="text" placeholder="Acesso" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('_gp').focus()">
+      <input class="_gi" id="_gp" type="password" placeholder="Chave" autocomplete="off" onkeydown="if(event.key==='Enter')_gchk()">
       <button class="_gb" id="_gbtn" onclick="_gchk()">Entrar</button>
       <div class="_ge" id="_gm"></div>
     </div>
@@ -2195,7 +2195,7 @@ window.addEventListener('resize', ajustarPaddingContent);
   ajustarPaddingContent();
 })();
 
-// ═══ AUTH ═══
+// ═══ INIT EXT ═══
 (function(){
   const _sk='_dsx', _st='_dst', _ttl=8*60*60*1000; // 8h em ms
   const _now=Date.now();
@@ -2242,7 +2242,7 @@ async function _gchk(){
     },1500);
   } else {
     _btn.disabled=false; _btn.textContent='Entrar';
-    _m.textContent='Usuário ou senha incorretos';
+    _m.textContent='Credenciais inválidas';
     document.getElementById('_gp').value='';
     document.getElementById('_gp').focus();
   }
