@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AdOpt — Planejamento de Mídia</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f2f7;
+  --surface:#fff;
+  --surface2:#f7f8fc;
+  --border:rgba(0,0,0,.07);
+  --border-strong:rgba(0,0,0,.12);
+  --text:#0f1523;
+  --muted:#6b7280;
+  --muted2:#9ca3af;
+  --accent:#02C028;
+  --sh:0 1px 4px rgba(0,0,0,.06);
+  --r:12px;
+  --c-search:#3b82f6;
+  --c-pmax:#10b981;
+  --c-demgen:#8b5cf6;
+  --c-smart:#f59e0b;
+  --c-meta-frio:#1877f2;
+  --c-meta-quente:#e11d48;
+  --c-meta-eng:#8b5cf6;
+  --c-li-blog:#0a66c2;
+  --c-li-foll:#10b981;
+  --c-li-conv:#f59e0b;
+  --c-google:#fbbc04;
+  --c-meta:#1877f2;
+  --c-linkedin:#0a66c2;
+}
+[data-theme="dark"]{
+  --bg:#0a0f1e;
+  --surface:#111827;
+  --surface2:#1a2236;
+  --border:rgba(255,255,255,.08);
+  --border-strong:rgba(255,255,255,.16);
+  --text:#f0f4ff;
+  --muted:#8b95a9;
+  --muted2:#5a6478;
+  --sh:0 1px 4px rgba(0,0,0,.3);
+}
+[data-theme="dark"] .sb{background:#060b14;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden;}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh;align-items:start;}
+
+/* SIDEBAR */
+.sb{background:#0f1523;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
+.sb-logo img{max-width:170px;height:42px;object-fit:contain;object-position:left center;}
+.sb-nav{padding:10px 8px;flex:1;}
+.sb-section{padding:16px 10px 4px;}
+.sb-platform-group{padding:4px 4px 0;}
+.sb-platform-hd{display:flex;align-items:center;gap:8px;padding:6px 10px 4px;margin-bottom:2px;}
+.sb-platform-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;flex-shrink:0;}
+.sb-platform-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:1.5px;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;cursor:pointer;color:rgba(255,255,255,.55);font-size:12px;font-weight:500;transition:all .15s;margin-bottom:2px;text-decoration:none;}
+.sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.9);}
+.sb-item.active{background:rgba(255,255,255,.1);color:#fff;}
+.sb-item .ico{font-size:14px;width:18px;text-align:center;}
+.sb-dot{width:6px;height:6px;border-radius:50%;margin-left:auto;}
+.sb-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.05);}
+.sb-footer span{font-size:10px;color:rgba(255,255,255,.3);}
+.sb-footer .credit{margin-top:8px;font-size:9px;color:rgba(255,255,255,.18);line-height:1.4;}
+.sb-footer .credit b{color:rgba(255,255,255,.35);font-weight:600;}
+
+/* TOPBAR */
+.main{display:flex;flex-direction:column;overflow-x:hidden;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:11px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:90;box-shadow:0 2px 8px rgba(0,0,0,.08);gap:8px;flex-wrap:wrap;}
+.topbar-l{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.page-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.live-badge{display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(2,192,40,.12);border:1px solid rgba(2,192,40,.3);color:#02C028;}
+.pulse{width:6px;height:6px;border-radius:50%;background:#02C028;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.topbar-r{display:flex;align-items:center;gap:6px;}
+.theme-btn{padding:5px 11px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;}
+
+/* CONTENT */
+.content{padding:22px;flex:1;overflow-x:hidden;}
+.page-section{display:none;}
+.page-section.active{display:block;}
+
+/* HERO */
+.hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 26px;margin-bottom:18px;box-shadow:var(--sh);display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+.hero-l{flex:1;min-width:280px;}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+.hero-tag span{width:22px;height:1px;background:var(--accent);display:inline-block;}
+.hero h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;line-height:1.2;letter-spacing:-.01em;margin-bottom:6px;}
+.hero h1 em{font-style:normal;color:var(--accent);font-weight:700;}
+.hero p{font-size:13px;color:var(--muted);max-width:560px;line-height:1.5;}
+.hero-meta{display:flex;flex-direction:column;gap:6px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:right;}
+.hero-meta strong{color:var(--text);font-family:'Syne',sans-serif;font-weight:700;font-size:11px;}
+
+/* SECTION */
+.section{margin-bottom:24px;}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.sec-hd{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:12px;}
+
+/* INVESTIMENTO BAR */
+.invest-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:18px;box-shadow:var(--sh);}
+.invest-bar-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.invest-bar-ttl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;}
+.invest-bar-total{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
+.invest-bar-total strong{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-left:6px;}
+.invest-stack{display:flex;height:44px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+.invest-stack-seg{display:flex;flex-direction:column;justify-content:center;padding:0 12px;color:#fff;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;transition:flex .25s;min-width:60px;}
+.invest-stack-seg .pct{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;line-height:1;margin-bottom:2px;}
+.invest-stack-seg .lbl{font-size:9px;letter-spacing:.05em;text-transform:uppercase;opacity:.92;line-height:1;}
+
+/* ARCHITECTURE FLOW */
+.flow-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px 24px;overflow-x:auto;box-shadow:var(--sh);}
+.flow-root{display:flex;flex-direction:column;align-items:center;}
+.flow-root-node{background:linear-gradient(135deg,rgba(2,192,40,.15),rgba(2,192,40,.05));border:1px solid rgba(2,192,40,.35);border-radius:10px;padding:11px 26px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:.02em;}
+.flow-connector-v{width:2px;height:24px;background:var(--border-strong);margin:0 auto;}
+.flow-row{display:grid;gap:14px;width:100%;}
+.flow-row.cols-4{grid-template-columns:repeat(4,1fr);}
+.flow-row.cols-3{grid-template-columns:repeat(3,1fr);}
+.flow-branch{display:flex;flex-direction:column;align-items:center;}
+
+/* CHANNEL NODE — badge de % no topo + título */
+.flow-node{
+  border-radius:12px;
+  padding:14px 16px;
+  width:100%;
+  border:1px solid;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:8px;
+}
+.flow-node-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;line-height:1.2;}
+.flow-pct-badge{
+  display:inline-flex;
+  align-items:baseline;
+  gap:5px;
+  padding:5px 13px;
+  border-radius:20px;
+  font-family:'DM Mono',monospace;
+  background:#fff;
+  border:1.5px solid currentColor;
+  letter-spacing:.02em;
+}
+[data-theme="dark"] .flow-pct-badge{background:rgba(255,255,255,.08);}
+.flow-pct-badge .pct-big{font-size:14px;font-weight:700;line-height:1;}
+.flow-pct-badge .pct-sub{font-size:10px;font-weight:500;opacity:.7;}
+
+.flow-connector-down{width:2px;height:18px;margin:0 auto;}
+.flow-sub-group{display:flex;flex-direction:column;gap:8px;width:100%;}
+.flow-sub-node{
+  border-radius:8px;
+  padding:10px 13px;
+  border:1px solid;
+  font-size:11px;
+  line-height:1.45;
+}
+.flow-sub-node strong{
+  display:block;
+  font-size:10px;
+  margin-bottom:3px;
+  font-family:'DM Mono',monospace;
+  font-weight:600;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.flow-sub-node span{font-size:11px;opacity:.85;}
+
+/* Google */
+.fn-search{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.35);color:var(--c-search);}
+.fn-pmax{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.35);color:var(--c-pmax);}
+.fn-demgen{background:rgba(139,92,246,.08);border-color:rgba(139,92,246,.35);color:var(--c-demgen);}
+.fn-smart{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.35);color:var(--c-smart);}
+.fc-search{background:rgba(59,130,246,.4);}
+.fc-pmax{background:rgba(16,185,129,.4);}
+.fc-demgen{background:rgba(139,92,246,.4);}
+.fc-smart{background:rgba(245,158,11,.4);}
+.fsn-search{background:rgba(59,130,246,.05);border-color:rgba(59,130,246,.22);color:var(--c-search);}
+.fsn-pmax{background:rgba(16,185,129,.05);border-color:rgba(16,185,129,.22);color:var(--c-pmax);}
+.fsn-demgen{background:rgba(139,92,246,.05);border-color:rgba(139,92,246,.22);color:var(--c-demgen);}
+.fsn-smart{background:rgba(245,158,11,.05);border-color:rgba(245,158,11,.22);color:var(--c-smart);}
+[data-theme="dark"] .fsn-search{color:#93c5fd;}
+[data-theme="dark"] .fsn-pmax{color:#6ee7b7;}
+[data-theme="dark"] .fsn-demgen{color:#c4b5fd;}
+[data-theme="dark"] .fsn-smart{color:#fcd34d;}
+
+/* Meta */
+.fn-mfrio{background:rgba(24,119,242,.08);border-color:rgba(24,119,242,.35);color:var(--c-meta-frio);}
+.fn-mquente{background:rgba(225,29,72,.08);border-color:rgba(225,29,72,.35);color:var(--c-meta-quente);}
+.fn-meng{background:rgba(139,92,246,.08);border-color:rgba(139,92,246,.35);color:var(--c-meta-eng);}
+.fc-mfrio{background:rgba(24,119,242,.4);}
+.fc-mquente{background:rgba(225,29,72,.4);}
+.fc-meng{background:rgba(139,92,246,.4);}
+.fsn-mfrio{background:rgba(24,119,242,.05);border-color:rgba(24,119,242,.22);color:var(--c-meta-frio);}
+.fsn-mquente{background:rgba(225,29,72,.05);border-color:rgba(225,29,72,.22);color:var(--c-meta-quente);}
+.fsn-meng{background:rgba(139,92,246,.05);border-color:rgba(139,92,246,.22);color:var(--c-meta-eng);}
+[data-theme="dark"] .fsn-mfrio{color:#93c5fd;}
+[data-theme="dark"] .fsn-mquente{color:#fda4af;}
+[data-theme="dark"] .fsn-meng{color:#c4b5fd;}
+
+/* LinkedIn */
+.fn-liblog{background:rgba(10,102,194,.08);border-color:rgba(10,102,194,.35);color:var(--c-li-blog);}
+.fn-lifoll{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.35);color:var(--c-li-foll);}
+.fn-liconv{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.35);color:var(--c-li-conv);}
+.fc-liblog{background:rgba(10,102,194,.4);}
+.fc-lifoll{background:rgba(16,185,129,.4);}
+.fc-liconv{background:rgba(245,158,11,.4);}
+.fsn-liblog{background:rgba(10,102,194,.05);border-color:rgba(10,102,194,.22);color:var(--c-li-blog);}
+.fsn-lifoll{background:rgba(16,185,129,.05);border-color:rgba(16,185,129,.22);color:var(--c-li-foll);}
+.fsn-liconv{background:rgba(245,158,11,.05);border-color:rgba(245,158,11,.22);color:var(--c-li-conv);}
+[data-theme="dark"] .fsn-liblog{color:#7cb1e0;}
+[data-theme="dark"] .fsn-lifoll{color:#6ee7b7;}
+[data-theme="dark"] .fsn-liconv{color:#fcd34d;}
+
+/* PAINEL GERAL */
+.pg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;}
+.pg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);border-top:3px solid var(--cc);}
+.pg-card-hd{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.pg-card-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;}
+.pg-card-ttl{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.pg-card-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+.pg-budget{display:flex;align-items:baseline;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:12px;}
+.pg-budget-val{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--cc);line-height:1;}
+.pg-budget-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.pg-pilars{display:flex;flex-direction:column;gap:7px;}
+.pg-pilar{display:flex;align-items:center;gap:8px;font-size:11px;}
+.pg-pilar-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0;}
+.pg-pilar-name{flex:1;color:var(--text);}
+.pg-pilar-pct{font-family:'DM Mono',monospace;font-weight:700;color:var(--muted);font-size:11px;}
+
+/* UTM TABLE */
+.utm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin-bottom:14px;}
+.utm-card-hd{padding:13px 18px;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px;}
+.utm-card-hd-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;}
+.utm-list{padding:8px 18px;}
+.utm-item{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;font-family:'DM Mono',monospace;}
+.utm-item:last-child{border-bottom:none;}
+.utm-key{color:var(--text);font-weight:600;flex-shrink:0;min-width:140px;}
+.utm-val{color:var(--muted);text-align:right;flex:1;}
+.utm-tags{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;}
+.utm-tag{font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid;font-family:'DM Mono',monospace;}
+.utm-example{padding:12px 18px;border-top:1px solid var(--border);background:var(--surface2);font-size:11px;font-family:'DM Mono',monospace;color:var(--text);word-break:break-all;line-height:1.5;}
+.utm-example b{display:block;font-family:'DM Sans',sans-serif;font-size:10px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
+.utm-warn{padding:10px 18px;font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;border-top:1px solid var(--border);}
+
+/* ESTRATÉGIA */
+.strat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh);margin-bottom:18px;}
+.strat-grid{display:flex;flex-direction:column;gap:16px;}
+.strat-block{padding-left:14px;border-left:3px solid var(--bl-color,var(--accent));}
+.strat-block-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--bl-color,var(--accent));margin-bottom:5px;letter-spacing:.06em;}
+.strat-block-txt{font-size:13px;color:var(--text);line-height:1.5;}
+.strat-concl{margin-top:8px;padding:14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);font-size:13px;line-height:1.5;}
+.strat-concl strong{color:var(--accent);}
+
+/* MOB */
+.mob-menu{display:none;width:34px;height:34px;border-radius:7px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-size:17px;align-items:center;justify-content:center;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250;}
+.overlay.open{display:block;}
+@media(max-width:900px){
+  .flow-row.cols-4{grid-template-columns:repeat(2,1fr);}
+  .pg-grid{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  .app{grid-template-columns:1fr;}
+  .sb{display:none;position:fixed;top:0;left:0;width:240px;height:100vh;z-index:400;}
+  .sb.open{display:flex;}
+  .mob-menu{display:flex;}
+  .content{padding:14px;}
+  .hero{padding:18px;}
+  .hero h1{font-size:18px;}
+  .hero-meta{text-align:left;}
+  .flow-row.cols-4,.flow-row.cols-3{grid-template-columns:1fr;}
+  .invest-stack{height:auto;flex-direction:column;}
+  .invest-stack-seg{padding:8px 12px;min-height:38px;}
+  .topbar{padding:10px 14px;}
+}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="closeSb()"></div>
+<div class="app">
+
+<aside class="sb" id="sidebar">
+  <div class="sb-logo">
+    <img src="logo.png" alt="AdOpt" onerror="this.outerHTML='<div style=&quot;font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:#fff&quot;>AdOpt</div>'">
+  </div>
+  <div class="sb-nav">
+    <div class="sb-section">
+
+      <a href="#" class="sb-item active" id="sbPainel" onclick="goPage('painel',this);return false;">
+        <span class="ico">🎯</span>Painel Geral
+        <span class="sb-dot" style="background:#02C028"></span>
+      </a>
+
+      <div class="sb-platform-group" style="margin-top:14px">
+        <div class="sb-platform-hd">
+          <div class="sb-platform-icon" style="background:linear-gradient(135deg,#fbbc04,#ea4335)">G</div>
+          <span class="sb-platform-lbl">Google Ads</span>
+        </div>
+        <a href="#" class="sb-item" id="sbGoogle" onclick="goPage('google',this);return false;">
+          <span class="ico">📋</span>Estrutura
+        </a>
+      </div>
+      <div class="sb-platform-group" style="margin-top:10px">
+        <div class="sb-platform-hd">
+          <div class="sb-platform-icon" style="background:linear-gradient(135deg,#1877f2,#42a5f5)">f</div>
+          <span class="sb-platform-lbl">Meta Ads</span>
+        </div>
+        <a href="#" class="sb-item" id="sbMeta" onclick="goPage('meta',this);return false;">
+          <span class="ico">📋</span>Estrutura
+        </a>
+      </div>
+      <div class="sb-platform-group" style="margin-top:10px">
+        <div class="sb-platform-hd">
+          <div class="sb-platform-icon" style="background:linear-gradient(135deg,#0a66c2,#0073b1)">in</div>
+          <span class="sb-platform-lbl">LinkedIn Ads</span>
+        </div>
+        <a href="#" class="sb-item" id="sbLinkedIn" onclick="goPage('linkedin',this);return false;">
+          <span class="ico">📋</span>Estrutura
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="sb-footer">
+    <span>Planejamento</span>
+    <div class="credit">Plano de mídia<br><b>AdOpt</b></div>
+    <div class="credit" style="margin-top:8px">Desenvolvido por<br><b>Sobé Estratégias</b></div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-l">
+      <button class="mob-menu" onclick="toggleSb()">☰</button>
+      <div class="page-title" id="pageTitle">Painel Geral</div>
+      <div class="live-badge"><div class="pulse"></div><span>Plano de Mídia</span></div>
+    </div>
+    <div class="topbar-r">
+      <button class="theme-btn" onclick="toggleTheme()"><span id="themeIcon">🌙</span><span id="themeLabel">Escuro</span></button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ════════════════ PAINEL GERAL ════════════════ -->
+    <div class="page-section active" id="page-painel">
+
+      <div class="hero">
+        <div class="hero-l">
+          <div class="hero-tag"><span></span>Planejamento de Mídia · Visão Consolidada</div>
+          <h1>Painel Geral<br><em>AdOpt</em></h1>
+          <p>Resumo do investimento por origem e padronização de UTMs aplicada a todos os canais de mídia paga.</p>
+        </div>
+        <div class="hero-meta">
+          <div>Cliente <strong>Go Adopt</strong></div>
+          <div>Mercado <strong>Brasil · PT-BR</strong></div>
+          <div>Canais <strong>Google · Meta · LinkedIn</strong></div>
+          <div>Modelo <strong>Funil completo · multicanal</strong></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">01 — Resumo de Budget por Origem</div>
+        <div class="pg-grid">
+
+          <div class="pg-card" style="--cc:var(--c-google)">
+            <div class="pg-card-hd">
+              <div class="pg-card-icon" style="background:linear-gradient(135deg,#fbbc04,#ea4335)">G</div>
+              <div>
+                <div class="pg-card-ttl">Google Ads</div>
+                <div class="pg-card-sub">Demanda ativa + automação</div>
+              </div>
+            </div>
+            <div class="pg-budget">
+              <div class="pg-budget-val">$ 1.000</div>
+              <div class="pg-budget-lbl">/ mês</div>
+            </div>
+            <div class="pg-pilars">
+              <div class="pg-pilar"><div class="pg-pilar-dot" style="background:var(--c-search)"></div><span class="pg-pilar-name">Search</span><span class="pg-pilar-pct">60% · $600</span></div>
+              <div class="pg-pilar"><div class="pg-pilar-dot" style="background:var(--c-pmax)"></div><span class="pg-pilar-name">Performance Max</span><span class="pg-pilar-pct">14% · $140</span></div>
+              <div class="pg-pilar"><div class="pg-pilar-dot" style="background:var(--c-demgen)"></div><span class="pg-pilar-name">Demand Gen</span><span class="pg-pilar-pct">13% · $130</span></div>
+              <div class="pg-pilar"><div class="pg-pilar-dot" style="background:var(--c-smart)"></div><span class="pg-pilar-name">Smart Remarketing</span><span class="pg-pilar-pct">13% · $130</span></div>
+            </div>
+          </div>
+
+          <div class="pg-card" style="--cc:var(--c-meta)">
+            <div class="pg-card-hd">
+              <div class="pg-card-icon" style="background:linear-gradient(135deg,#1877f2,#42a5f5)">f</div>
+              <div>
+                <div class="pg-card-ttl">Meta Ads</div>
+                <div class="pg-card-sub">Funil de audiência + conversão</div>
+              </div>
+            </div>
+            <div class="pg-budget">
+              <div class="pg-budget-val">100%</div>
+              <div class="pg-budget-lbl">estrutura · valor a definir</div>
+            </div>
+            <div class="pg-pilars">
+              <div class="pg-pilar"><div class="pg-pilar-dot" style="background:var(--c-meta-frio)"></div><span class="pg-pilar-name">Distribuição de Conteúdo</span><span class="pg-pilar-pct">40%</span></div>
+              <div class="pg-pilar"><div class="pg-pilar-dot" style="background:var(--c-meta-eng)"></div><span class="pg-pilar-name">Envolvimento da Base</span><span class="pg-pilar-pct">10%</span></div>
+              <div class="pg-pilar"><div class="pg-pilar-dot" style="background:var(--c-meta-quente)"></div><span class="pg-pilar-name">Conversão Landing Page</span><span class="pg-pilar-pct">50%</span></div>
+            </div>
+          </div>
+
+          <div class="pg-card" style="--cc:var(--c-linkedin)">
+            <div class="pg-card-hd">
+              <div class="pg-card-icon" style="background:linear-gradient(135deg,#0a66c2,#0073b1)">in</div>
+              <div>
+                <div class="pg-card-ttl">LinkedIn Ads</div>
+                <div class="pg-card-sub">B2B · audiência + lead</div>
+              </div>
+            </div>
+            <div class="pg-budget">
+              <div class="pg-budget-val">100%</div>
+              <div class="pg-budget-lbl">estrutura · valor a definir</div>
+            </div>
+            <div class="pg-pilars">
+              <div class="pg-pilar"><div class="pg-pilar-dot" style="background:var(--c-li-blog)"></div><span class="pg-pilar-name">Conteúdos de Blog</span><span class="pg-pilar-pct">30%</span></div>
+              <div class="pg-pilar"><div class="pg-pilar-dot" style="background:var(--c-li-foll)"></div><span class="pg-pilar-name">Aumento de Seguidores</span><span class="pg-pilar-pct">40%</span></div>
+              <div class="pg-pilar"><div class="pg-pilar-dot" style="background:var(--c-li-conv)"></div><span class="pg-pilar-name">Conversão</span><span class="pg-pilar-pct">30%</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">02 — Padrão de UTMs · Todos os canais</div>
+
+        <div class="utm-card">
+          <div class="utm-card-hd">
+            <div class="utm-card-hd-icon" style="background:linear-gradient(135deg,#fbbc04,#ea4335)">G</div>
+            <span>Google Ads</span>
+          </div>
+          <div class="utm-list">
+            <div class="utm-item"><span class="utm-key">utm_source</span><div class="utm-val utm-tags">
+              <span class="utm-tag" style="background:rgba(59,130,246,.08);color:var(--c-search);border-color:rgba(59,130,246,.25)">google_search</span>
+              <span class="utm-tag" style="background:rgba(16,185,129,.08);color:var(--c-pmax);border-color:rgba(16,185,129,.25)">google_pmax</span>
+              <span class="utm-tag" style="background:rgba(139,92,246,.08);color:var(--c-demgen);border-color:rgba(139,92,246,.25)">google_dmg</span>
+              <span class="utm-tag" style="background:rgba(245,158,11,.08);color:var(--c-smart);border-color:rgba(245,158,11,.25)">google_smart</span>
+            </div></div>
+            <div class="utm-item"><span class="utm-key">utm_medium</span><span class="utm-val">nome do grupo de anúncios</span></div>
+            <div class="utm-item"><span class="utm-key">utm_campaign</span><span class="utm-val">nome da campanha</span></div>
+            <div class="utm-item"><span class="utm-key">utm_content</span><span class="utm-val">anuncio</span></div>
+            <div class="utm-item"><span class="utm-key">utm_term</span><span class="utm-val">palavra-chave</span></div>
+          </div>
+          <div class="utm-example">
+            <b>Exemplo</b>
+            goadopt.io/?utm_source=google_search&amp;utm_medium=gen_cookies&amp;utm_campaign=search_generica&amp;utm_content=anuncio&amp;utm_term=aviso_de_cookies
+          </div>
+        </div>
+
+        <div class="utm-card">
+          <div class="utm-card-hd">
+            <div class="utm-card-hd-icon" style="background:linear-gradient(135deg,#1877f2,#42a5f5)">f</div>
+            <span>Meta Ads</span>
+          </div>
+          <div class="utm-list">
+            <div class="utm-item"><span class="utm-key">utm_source</span><div class="utm-val utm-tags">
+              <span class="utm-tag" style="background:rgba(225,29,72,.08);color:var(--c-meta-quente);border-color:rgba(225,29,72,.25)">meta-ads</span>
+            </div></div>
+            <div class="utm-item"><span class="utm-key">utm_medium</span><span class="utm-val">nome do público</span></div>
+            <div class="utm-item"><span class="utm-key">utm_campaign</span><span class="utm-val">nome da campanha</span></div>
+            <div class="utm-item"><span class="utm-key">utm_content</span><span class="utm-val">nome do anúncio</span></div>
+            <div class="utm-item"><span class="utm-key">utm_term</span><span class="utm-val">posicionamento</span></div>
+          </div>
+          <div class="utm-example">
+            <b>Exemplo</b>
+            goadopt.io/?utm_source=meta-ads&amp;utm_medium=lookalike_convertidos&amp;utm_campaign=conv_lp&amp;utm_content=video_30s&amp;utm_term=feed_instagram
+          </div>
+          <div class="utm-warn">⚠ UTMs aplicadas apenas em campanhas de Conversão. Distribuição e Envolvimento não levam UTM.</div>
+        </div>
+
+        <div class="utm-card">
+          <div class="utm-card-hd">
+            <div class="utm-card-hd-icon" style="background:linear-gradient(135deg,#0a66c2,#0073b1)">in</div>
+            <span>LinkedIn Ads</span>
+          </div>
+          <div class="utm-list">
+            <div class="utm-item"><span class="utm-key">utm_source</span><div class="utm-val utm-tags">
+              <span class="utm-tag" style="background:rgba(245,158,11,.08);color:var(--c-li-conv);border-color:rgba(245,158,11,.25)">linkedin-ads</span>
+            </div></div>
+            <div class="utm-item"><span class="utm-key">utm_medium</span><span class="utm-val">nome do público</span></div>
+            <div class="utm-item"><span class="utm-key">utm_campaign</span><span class="utm-val">nome da campanha</span></div>
+            <div class="utm-item"><span class="utm-key">utm_content</span><span class="utm-val">nome do anúncio</span></div>
+          </div>
+          <div class="utm-example">
+            <b>Exemplo</b>
+            goadopt.io/?utm_source=linkedin-ads&amp;utm_medium=cargos_juridico&amp;utm_campaign=conv_leadgen&amp;utm_content=carrossel_lgpd
+          </div>
+          <div class="utm-warn">⚠ UTMs aplicadas apenas em campanhas de Conversão. Blog e Seguidores não levam UTM. Padronização essencial para integração com CRM.</div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ════════════════ GOOGLE ADS ════════════════ -->
+    <div class="page-section" id="page-google">
+
+      <div class="hero">
+        <div class="hero-l">
+          <div class="hero-tag"><span></span>Google Ads · Plano Estratégico</div>
+          <h1>Estrutura de Campanhas<br><em>Google Ads</em></h1>
+          <p>Estratégia integrada com captura de demanda ativa (Search), expansão via automação (PMAX), nutrição (Demand Gen) e recuperação (Smart Remarketing).</p>
+        </div>
+        <div class="hero-meta">
+          <div>Produto <strong>Plataforma CMP / LGPD</strong></div>
+          <div>Mercado <strong>Brasil · PT-BR</strong></div>
+          <div>Canais <strong>Search · PMAX · Demand Gen · Smart</strong></div>
+          <div>Investimento <strong>$ 1.000 / mês</strong></div>
+        </div>
+      </div>
+
+      <div class="invest-bar">
+        <div class="invest-bar-hd">
+          <div class="invest-bar-ttl">Distribuição do Investimento</div>
+          <div class="invest-bar-total">Total: <strong>$ 1.000</strong></div>
+        </div>
+        <div class="invest-stack">
+          <div class="invest-stack-seg" style="background:var(--c-search);flex:60"><div class="pct">60%</div><div class="lbl">Search · $600</div></div>
+          <div class="invest-stack-seg" style="background:var(--c-pmax);flex:14"><div class="pct">14%</div><div class="lbl">PMAX · $140</div></div>
+          <div class="invest-stack-seg" style="background:var(--c-demgen);flex:13"><div class="pct">13%</div><div class="lbl">Demand Gen · $130</div></div>
+          <div class="invest-stack-seg" style="background:var(--c-smart);flex:13"><div class="pct">13%</div><div class="lbl">Smart · $130</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">01 — Arquitetura de Campanhas</div>
+        <div class="flow-wrap">
+          <div class="flow-root">
+            <div class="flow-root-node">AdOpt — Google Ads</div>
+            <div class="flow-connector-v"></div>
+            <div class="flow-row cols-4">
+
+              <div class="flow-branch">
+                <div class="flow-node fn-search">
+                  <div class="flow-pct-badge"><span class="pct-big">60%</span><span class="pct-sub">· $600</span></div>
+                  <div class="flow-node-title">Search</div>
+                </div>
+                <div class="flow-connector-down fc-search"></div>
+                <div class="flow-sub-group">
+                  <div class="flow-sub-node fsn-search"><strong>Objetivo</strong><span>Captura de demanda ativa via busca</span></div>
+                  <div class="flow-sub-node fsn-search"><strong>Grupos de anúncio</strong><span>Institucional · Genéricas · Concorrentes</span></div>
+                  <div class="flow-sub-node fsn-search"><strong>Estratégia de lance</strong><span>Maximizar conversões · tCPA</span></div>
+                </div>
+              </div>
+
+              <div class="flow-branch">
+                <div class="flow-node fn-pmax">
+                  <div class="flow-pct-badge"><span class="pct-big">14%</span><span class="pct-sub">· $140</span></div>
+                  <div class="flow-node-title">Performance Max</div>
+                </div>
+                <div class="flow-connector-down fc-pmax"></div>
+                <div class="flow-sub-group">
+                  <div class="flow-sub-node fsn-pmax"><strong>Objetivo</strong><span>Expansão automatizada multicanal</span></div>
+                  <div class="flow-sub-node fsn-pmax"><strong>Asset groups</strong><span>Cookies · LGPD</span></div>
+                  <div class="flow-sub-node fsn-pmax"><strong>Sinais de audiência</strong><span>Visitantes · convertidos · similares</span></div>
+                </div>
+              </div>
+
+              <div class="flow-branch">
+                <div class="flow-node fn-demgen">
+                  <div class="flow-pct-badge"><span class="pct-big">13%</span><span class="pct-sub">· $130</span></div>
+                  <div class="flow-node-title">Demand Gen</div>
+                </div>
+                <div class="flow-connector-down fc-demgen"></div>
+                <div class="flow-sub-group">
+                  <div class="flow-sub-node fsn-demgen"><strong>Objetivo</strong><span>Geração e nutrição de demanda</span></div>
+                  <div class="flow-sub-node fsn-demgen"><strong>Audiências</strong><span>Lookalikes de convertidos e visitantes</span></div>
+                  <div class="flow-sub-node fsn-demgen"><strong>Reforço</strong><span>Remarketing leve · não convertidos</span></div>
+                </div>
+              </div>
+
+              <div class="flow-branch">
+                <div class="flow-node fn-smart">
+                  <div class="flow-pct-badge"><span class="pct-big">13%</span><span class="pct-sub">· $130</span></div>
+                  <div class="flow-node-title">Smart</div>
+                </div>
+                <div class="flow-connector-down fc-smart"></div>
+                <div class="flow-sub-group">
+                  <div class="flow-sub-node fsn-smart"><strong>Objetivo</strong><span>Recuperação de oportunidades</span></div>
+                  <div class="flow-sub-node fsn-smart"><strong>Audiência</strong><span>Visitantes do site não convertidos</span></div>
+                  <div class="flow-sub-node fsn-smart"><strong>Canais</strong><span>Gmail · Display · YouTube</span></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">02 — Estratégia de Crescimento</div>
+        <div class="strat-card">
+          <div class="strat-grid">
+            <div class="strat-block" style="--bl-color:var(--c-search)">
+              <div class="strat-block-lbl">01 — Captura de demanda ativa</div>
+              <div class="strat-block-txt">Search concentra a maior parte do investimento para capturar usuários com alta intenção de compra, garantindo volume inicial de conversões e aprendizado do algoritmo.</div>
+            </div>
+            <div class="strat-block" style="--bl-color:var(--c-pmax)">
+              <div class="strat-block-lbl">02 — Expansão com automação</div>
+              <div class="strat-block-txt">PMAX amplia o alcance utilizando dados do próprio Google, explorando novos públicos com base em comportamento e sinais de intenção.</div>
+            </div>
+            <div class="strat-block" style="--bl-color:var(--c-demgen)">
+              <div class="strat-block-lbl">03 — Geração e nutrição de demanda</div>
+              <div class="strat-block-txt">Demand Gen atua na construção de interesse e reforço de marca, impactando usuários semelhantes aos convertidos e visitantes do site.</div>
+            </div>
+            <div class="strat-block" style="--bl-color:var(--c-smart)">
+              <div class="strat-block-lbl">04 — Recuperação de oportunidades</div>
+              <div class="strat-block-txt">Smart remarketing atua na conversão de usuários que já interagiram com o site, reduzindo desperdício e aumentando eficiência do investimento.</div>
+            </div>
+            <div class="strat-concl">
+              Estratégia focada em <strong>escala com eficiência</strong>, combinando captura de demanda existente, expansão inteligente e maximização da conversão dos usuários impactados.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════════════════ META ADS ════════════════ -->
+    <div class="page-section" id="page-meta">
+
+      <div class="hero">
+        <div class="hero-l">
+          <div class="hero-tag" style="color:var(--c-meta-frio)"><span style="background:var(--c-meta-frio)"></span>Meta Ads · Plano Estratégico</div>
+          <h1>Estrutura de Campanhas<br><em style="color:var(--c-meta-frio)">Meta Ads</em></h1>
+          <p>Distribuição em três pilares — atração de público frio, envolvimento da base e conversão na landing page — equilibrando geração de audiência e captação de leads.</p>
+        </div>
+        <div class="hero-meta">
+          <div>Plataformas <strong>Facebook · Instagram</strong></div>
+          <div>Mercado <strong>Brasil · PT-BR</strong></div>
+          <div>Pilares <strong>Distribuição · Envolvimento · Conversão</strong></div>
+          <div>Modelo <strong>Estrutura percentual</strong></div>
+        </div>
+      </div>
+
+      <div class="invest-bar">
+        <div class="invest-bar-hd">
+          <div class="invest-bar-ttl">Distribuição Percentual do Investimento</div>
+          <div class="invest-bar-total">Estrutura: <strong>100%</strong></div>
+        </div>
+        <div class="invest-stack">
+          <div class="invest-stack-seg" style="background:var(--c-meta-frio);flex:40"><div class="pct">40%</div><div class="lbl">Distribuição</div></div>
+          <div class="invest-stack-seg" style="background:var(--c-meta-eng);flex:10"><div class="pct">10%</div><div class="lbl">Envolvimento</div></div>
+          <div class="invest-stack-seg" style="background:var(--c-meta-quente);flex:50"><div class="pct">50%</div><div class="lbl">Conversão LP</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">01 — Arquitetura de Campanhas</div>
+        <div class="flow-wrap">
+          <div class="flow-root">
+            <div class="flow-root-node" style="background:linear-gradient(135deg,rgba(24,119,242,.15),rgba(24,119,242,.05));border-color:rgba(24,119,242,.35);color:var(--c-meta-frio)">AdOpt — Meta Ads</div>
+            <div class="flow-connector-v"></div>
+            <div class="flow-row cols-3">
+
+              <div class="flow-branch">
+                <div class="flow-node fn-mfrio">
+                  <div class="flow-pct-badge"><span class="pct-big">40%</span></div>
+                  <div class="flow-node-title">Distribuição de Conteúdo</div>
+                </div>
+                <div class="flow-connector-down fc-mfrio"></div>
+                <div class="flow-sub-group">
+                  <div class="flow-sub-node fsn-mfrio"><strong>Objetivo</strong><span>Acessos ao perfil · atrair seguidores</span></div>
+                  <div class="flow-sub-node fsn-mfrio"><strong>Público</strong><span>Frio · interesses, lookalike e cargos</span></div>
+                </div>
+              </div>
+
+              <div class="flow-branch">
+                <div class="flow-node fn-meng">
+                  <div class="flow-pct-badge"><span class="pct-big">10%</span></div>
+                  <div class="flow-node-title">Envolvimento da Base</div>
+                </div>
+                <div class="flow-connector-down fc-meng"></div>
+                <div class="flow-sub-group">
+                  <div class="flow-sub-node fsn-meng"><strong>Objetivo</strong><span>Engajar posts do perfil para a base</span></div>
+                  <div class="flow-sub-node fsn-meng"><strong>Público</strong><span>Quente · apenas seguidores</span></div>
+                </div>
+              </div>
+
+              <div class="flow-branch">
+                <div class="flow-node fn-mquente">
+                  <div class="flow-pct-badge"><span class="pct-big">50%</span></div>
+                  <div class="flow-node-title">Conversão Landing Page</div>
+                </div>
+                <div class="flow-connector-down fc-mquente"></div>
+                <div class="flow-sub-group">
+                  <div class="flow-sub-node fsn-mquente"><strong>Objetivo</strong><span>Converter novos leads para o CRM</span></div>
+                  <div class="flow-sub-node fsn-mquente"><strong>Frio · 60% deste pilar</strong><span>Interesses, lookalike e cargos</span></div>
+                  <div class="flow-sub-node fsn-mquente"><strong>Quente · 40% deste pilar</strong><span>Seguidores, page view, video view</span></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">02 — Estratégia de Crescimento</div>
+        <div class="strat-card">
+          <div class="strat-grid">
+            <div class="strat-block" style="--bl-color:var(--c-meta-frio)">
+              <div class="strat-block-lbl">01 — Construção de audiência (Topo)</div>
+              <div class="strat-block-txt">Distribuição de conteúdo expande a base de seguidores e abastece os públicos de remarketing das campanhas de conversão.</div>
+            </div>
+            <div class="strat-block" style="--bl-color:var(--c-meta-eng)">
+              <div class="strat-block-lbl">02 — Aquecimento da base (Meio)</div>
+              <div class="strat-block-txt">Envolvimento mantém a relação com seguidores ativos, prepara o público para mensagens comerciais e melhora alcance orgânico.</div>
+            </div>
+            <div class="strat-block" style="--bl-color:var(--c-meta-quente)">
+              <div class="strat-block-lbl">03 — Captação de leads (Fundo)</div>
+              <div class="strat-block-txt">Conversão concentra metade do investimento. Público frio escala volume; público quente eficientiza CPL com pessoas já familiarizadas com a marca.</div>
+            </div>
+            <div class="strat-concl">
+              Estrutura de funil completo, do <strong>tráfego frio à conversão</strong>. Conteúdo alimenta a base, a base alimenta a conversão e a conversão alimenta novos lookalikes.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════════════════ LINKEDIN ADS ════════════════ -->
+    <div class="page-section" id="page-linkedin">
+
+      <div class="hero">
+        <div class="hero-l">
+          <div class="hero-tag" style="color:var(--c-li-blog)"><span style="background:var(--c-li-blog)"></span>LinkedIn Ads · Plano Estratégico</div>
+          <h1>Estrutura de Campanhas<br><em style="color:var(--c-li-blog)">LinkedIn Ads</em></h1>
+          <p>Estratégia B2B com foco em autoridade técnica (blog), crescimento da página corporativa (seguidores) e captação de leads qualificados (conversão).</p>
+        </div>
+        <div class="hero-meta">
+          <div>Plataforma <strong>LinkedIn</strong></div>
+          <div>Segmento <strong>B2B</strong></div>
+          <div>Pilares <strong>Conteúdo · Seguidores · Conversão</strong></div>
+          <div>Modelo <strong>Estrutura percentual</strong></div>
+        </div>
+      </div>
+
+      <div class="invest-bar">
+        <div class="invest-bar-hd">
+          <div class="invest-bar-ttl">Distribuição Percentual do Investimento</div>
+          <div class="invest-bar-total">Estrutura: <strong>100%</strong></div>
+        </div>
+        <div class="invest-stack">
+          <div class="invest-stack-seg" style="background:var(--c-li-blog);flex:30"><div class="pct">30%</div><div class="lbl">Blog</div></div>
+          <div class="invest-stack-seg" style="background:var(--c-li-foll);flex:40"><div class="pct">40%</div><div class="lbl">Seguidores</div></div>
+          <div class="invest-stack-seg" style="background:var(--c-li-conv);flex:30"><div class="pct">30%</div><div class="lbl">Conversão</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">01 — Arquitetura de Campanhas</div>
+        <div class="flow-wrap">
+          <div class="flow-root">
+            <div class="flow-root-node" style="background:linear-gradient(135deg,rgba(10,102,194,.15),rgba(10,102,194,.05));border-color:rgba(10,102,194,.35);color:var(--c-li-blog)">AdOpt — LinkedIn Ads</div>
+            <div class="flow-connector-v"></div>
+            <div class="flow-row cols-3">
+
+              <div class="flow-branch">
+                <div class="flow-node fn-liblog">
+                  <div class="flow-pct-badge"><span class="pct-big">30%</span></div>
+                  <div class="flow-node-title">Conteúdos de Blog</div>
+                </div>
+                <div class="flow-connector-down fc-liblog"></div>
+                <div class="flow-sub-group">
+                  <div class="flow-sub-node fsn-liblog"><strong>Objetivo</strong><span>Brand awareness · tráfego para o blog</span></div>
+                  <div class="flow-sub-node fsn-liblog"><strong>Público</strong><span>Frio · interesses e cargos</span></div>
+                </div>
+              </div>
+
+              <div class="flow-branch">
+                <div class="flow-node fn-lifoll">
+                  <div class="flow-pct-badge"><span class="pct-big">40%</span></div>
+                  <div class="flow-node-title">Aumento de Seguidores</div>
+                </div>
+                <div class="flow-connector-down fc-lifoll"></div>
+                <div class="flow-sub-group">
+                  <div class="flow-sub-node fsn-lifoll"><strong>Objetivo</strong><span>Crescer página corporativa</span></div>
+                  <div class="flow-sub-node fsn-lifoll"><strong>Público</strong><span>Frio · interesses e cargos relacionados</span></div>
+                </div>
+              </div>
+
+              <div class="flow-branch">
+                <div class="flow-node fn-liconv">
+                  <div class="flow-pct-badge"><span class="pct-big">30%</span></div>
+                  <div class="flow-node-title">Conversão</div>
+                </div>
+                <div class="flow-connector-down fc-liconv"></div>
+                <div class="flow-sub-group">
+                  <div class="flow-sub-node fsn-liconv"><strong>Objetivo</strong><span>Captação direta de leads B2B</span></div>
+                  <div class="flow-sub-node fsn-liconv"><strong>Frio</strong><span>Cargos, lookalike e interesses</span></div>
+                  <div class="flow-sub-node fsn-liconv"><strong>Quente</strong><span>Seguidores e visitantes da página</span></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">02 — Estratégia de Crescimento</div>
+        <div class="strat-card">
+          <div class="strat-grid">
+            <div class="strat-block" style="--bl-color:var(--c-li-blog)">
+              <div class="strat-block-lbl">01 — Construção de autoridade técnica (Topo)</div>
+              <div class="strat-block-txt">Conteúdos de blog posicionam AdOpt como referência em LGPD e CMP no Brasil, qualificando o tráfego que chega à página e abastecendo retargeting.</div>
+            </div>
+            <div class="strat-block" style="--bl-color:var(--c-li-foll)">
+              <div class="strat-block-lbl">02 — Crescimento da página corporativa (Meio)</div>
+              <div class="strat-block-txt">Maior fatia do investimento. Base orgânica de seguidores é o ativo de longo prazo: amplifica posts, gera nutrição contínua e reduz custo futuro de aquisição.</div>
+            </div>
+            <div class="strat-block" style="--bl-color:var(--c-li-conv)">
+              <div class="strat-block-lbl">03 — Captação direta de leads B2B (Fundo)</div>
+              <div class="strat-block-txt">Captação direta com Lead Gen entrega leads pré-qualificados e CPL mais previsível, equilibrando público frio (escala) e quente (eficiência).</div>
+            </div>
+            <div class="strat-concl">
+              LinkedIn é canal <strong>B2B de longo prazo</strong>: o investimento maior em seguidores constrói ativo permanente, enquanto blog e conversão geram resultado imediato.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+</div>
+
+<script>
+function goPage(p,btn){
+  document.querySelectorAll('.page-section').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
+  document.getElementById('page-'+p)?.classList.add('active');
+  if(btn) btn.classList.add('active');
+  const titles={'painel':'Painel Geral','google':'Google Ads — Estrutura','meta':'Meta Ads — Estrutura','linkedin':'LinkedIn Ads — Estrutura'};
+  document.getElementById('pageTitle').textContent=titles[p]||p;
+  if(window.innerWidth<=768) closeSb();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleTheme(){
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('themeIcon').textContent=dark?'🌙':'☀️';
+  document.getElementById('themeLabel').textContent=dark?'Escuro':'Claro';
+  localStorage.setItem('adopt-theme',dark?'light':'dark');
+}
+(function(){const s=localStorage.getItem('adopt-theme');if(s){document.documentElement.setAttribute('data-theme',s);if(s==='dark'){document.getElementById('themeIcon').textContent='☀️';document.getElementById('themeLabel').textContent='Claro';}}})();
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('open');}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('open');}
+</script>
+</body>
+</html>
