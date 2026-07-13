@@ -530,7 +530,9 @@ def load_seo():
     # Como não há coluna de país explícita no SEO-country, vamos usar como diário
     df_co["date"]=pd.to_datetime(df_co["Dimension Date"],errors="coerce")
     co_daily=df_co.groupby("date").agg(imp=("Search Analytics Impressions","sum"),clk=("Search Analytics Clicks","sum")).reset_index().sort_values("date")
-    daily={"days":[r["date"].strftime("%d/%m") for _,r in co_daily.iterrows()],
+    # dd/mm/yy: a série de SEO passa de 12 meses; sem o ano o parseDayStr do
+    # template mistura anos (ex.: jun/25 + jun/26) e quebra o filtro de período
+    daily={"days":[r["date"].strftime("%d/%m/%y") for _,r in co_daily.iterrows()],
            "impressions":[int(r["imp"]) for _,r in co_daily.iterrows()],
            "clicks":[int(r["clk"]) for _,r in co_daily.iterrows()]}
     print(f"     Diário SEO: {len(daily['days'])} dias")
