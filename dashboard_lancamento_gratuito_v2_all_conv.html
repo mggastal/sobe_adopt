@@ -433,12 +433,12 @@ details.desk-only{display:block!important;}
         <div class="cc">
           <div class="cc-t">Impressões por Dia</div>
           <div class="cc-s">Evolução de impressões orgânicas</div>
-          <div class="cw" style="height:180px"><canvas id="chSeoImpr"></canvas></div>
+          <div class="cw" style="height:180px" id="chSeoImprWrap"><canvas id="chSeoImpr"></canvas></div>
         </div>
         <div class="cc">
           <div class="cc-t">Cliques por Dia</div>
           <div class="cc-s">Evolução de cliques orgânicos</div>
-          <div class="cw" style="height:180px"><canvas id="chSeoClk"></canvas></div>
+          <div class="cw" style="height:180px" id="chSeoClkWrap"><canvas id="chSeoClk"></canvas></div>
         </div>
       </div>
       <div class="g2 mb14">
@@ -607,17 +607,21 @@ function getHoje(){
   return new Date(); // fallback: hoje local
 }
 
-// Converte "dd/mm" do array de dias para Date usando ano correto
+// Converte "dd/mm" ou "dd/mm/yy" do array de dias para Date
 function parseDayStr(s){
-  const[dd,mm]=s.split('/');
+  const p=s.split('/');
+  const dd=parseInt(p[0],10), mm=parseInt(p[1],10);
+  if(p.length>=3){
+    // "dd/mm/yy" — ano explícito (séries longas como SEO), sem adivinhar
+    let yy=parseInt(p[2],10); if(yy<100) yy+=2000;
+    return new Date(yy, mm-1, dd);
+  }
+  // Fallback "dd/mm": heurística de 12 meses (séries curtas Meta/Google)
   const hoje=getHoje();
-  // Determinar ano: se mm > mês atual, provavelmente ano anterior
   let year=hoje.getFullYear();
-  const mesStr=parseInt(mm);
   const mesHoje=hoje.getMonth()+1;
-  // Se o mês do dado é maior que o mês de hoje, é do ano anterior
-  if(mesStr > mesHoje + 1) year--;
-  return new Date(year, mesStr-1, parseInt(dd));
+  if(mm > mesHoje + 1) year--;
+  return new Date(year, mm-1, dd);
 }
 
 function applyPeriod(daily){
@@ -1810,7 +1814,24 @@ function renderSeo(){
 
   // Gráficos diários — filtrados pelo período
   const sd=applyPeriod(SEO_DAILY);
-  if(sd){
+  // Garante que o canvas existe (pode ter sido substituído pela msg de vazio)
+  const seoCanvas=id=>{
+    let c=document.getElementById(id);
+    if(!c){
+      const w=document.getElementById(id+'Wrap');
+      if(w){w.innerHTML='<canvas id="'+id+'"></canvas>';c=document.getElementById(id);}
+    }
+    return c;
+  };
+  if(!sd || !sd.days?.length){
+    ['chSeoImpr','chSeoClk'].forEach(id=>{
+      dc(id);
+      const w=document.getElementById(id+'Wrap');
+      if(w) w.innerHTML='<div style="height:100%;min-height:160px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Sem dados de SEO no período selecionado</div>';
+    });
+  }
+  if(sd && sd.days?.length){
+    seoCanvas('chSeoImpr'); seoCanvas('chSeoClk');
     dc('chSeoImpr');
     CH['chSeoImpr']=new Chart(document.getElementById('chSeoImpr'),{type:'line',
       data:{labels:sd.days,datasets:[
