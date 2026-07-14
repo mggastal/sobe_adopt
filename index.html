@@ -2476,9 +2476,9 @@ function renderMetabase(){
   const srcRows=Object.entries(bySrc).sort((a,b)=>b[1].n-a[1].n);
   mbSrcList=srcRows.map(([s])=>s);
   const th=(t,left)=>`<th class="${left?'':'num'}" style="font-size:9px;padding:6px 10px;${left?'text-align:left;':''}color:var(--muted);text-transform:uppercase">${t}</th>`;
-  document.getElementById('mbSrcTable').innerHTML=`<table style="min-width:860px;width:100%;border-collapse:collapse">
+  document.getElementById('mbSrcTable').innerHTML=`<table style="min-width:920px;width:100%;border-collapse:collapse">
     <thead><tr style="background:var(--surface2)">
-      ${th('Origem (utm_source)',1)}${th('Cadastros')}${th('Verificados')}${th('% Verif.')}${th('Pagos')}${th('Starter')}${th('Business')}${th('Enterprise')}${th('Pro')}${th('Onboarding')}${th('Outros')}
+      ${th('Origem (utm_source)',1)}${th('Cadastros')}${th('Verificados')}${th('% Verif.')}${th('Pagos')}${th('% Pagos')}${th('Starter')}${th('Business')}${th('Enterprise')}${th('Pro')}${th('Onboarding')}${th('Outros')}
     </tr></thead>
     <tbody>${srcRows.map(([s,o],i)=>{
       const paid=o.Business+o.Enterprise+o.Pro;
@@ -2489,6 +2489,7 @@ function renderMetabase(){
         <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(o.ver)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px">${pct(o.ver,o.n)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700;color:#7c3aed">${fN(paid)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;color:#7c3aed">${pct(paid,o.n)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(o.Starter)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Business)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Enterprise)}</td>
@@ -2502,6 +2503,7 @@ function renderMetabase(){
       <td class="num" style="font-size:11px;padding:6px 10px">${fN(totVer)}</td>
       <td class="num" style="font-size:11px;padding:6px 10px">${pct(totVer,tot)}</td>
       <td class="num" style="font-size:11px;padding:6px 10px;color:#7c3aed">${fN(totPaid)}</td>
+      <td class="num" style="font-size:11px;padding:6px 10px;color:#7c3aed">${pct(totPaid,tot)}</td>
       <td class="num" colspan="6" style="font-size:10px;padding:6px 10px;color:var(--muted2);text-align:right">famílias somadas por origem</td>
     </tr></tfoot>
   </table>`;
