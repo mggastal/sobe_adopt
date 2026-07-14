@@ -110,6 +110,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;}
 .g73{display:grid;grid-template-columns:7fr 3fr;gap:12px;margin-bottom:14px;}
+.g31{display:grid;grid-template-columns:3fr 1fr;gap:12px;margin-bottom:14px;}
 .mb14{margin-bottom:14px;}
 
 /* MÉTRICAS DIÁRIAS */
@@ -204,7 +205,7 @@ details.desk-only{display:block!important;}
   .content{padding:12px;overflow-x:hidden;}
   .main{overflow-x:hidden;max-width:100vw;}
   .k5,.k4,.k3{grid-template-columns:repeat(2,1fr);}
-  .g2,.g3,.g73{grid-template-columns:1fr;}
+  .g2,.g3,.g73,.g31{grid-template-columns:1fr;}
   .pizza-grid{grid-template-columns:1fr;}
   .tc{overflow-x:auto;}
   .utm-groups{grid-template-columns:1fr;}
@@ -214,6 +215,27 @@ details.desk-only{display:block!important;}
   .seg-card{overflow-x:auto!important;}
   .daily-side{flex-direction:row;gap:12px;border-right:none;border-bottom:1px solid var(--border);}
 }
+/* ═══ Variação vs período anterior (KPIs) ═══ */
+.dlt{font-weight:700;}
+.dlt.up{color:#059669;}
+.dlt.down{color:#dc2626;}
+.dlt.flat{color:var(--muted);}
+/* ═══ Pills de granularidade (Diário/Semanal/Mensal) ═══ */
+.gran-pills{display:inline-flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px;flex-shrink:0;}
+.gran-pills .gp{border:0;background:transparent;color:var(--muted);font-size:9px;font-weight:700;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.4px;}
+.gran-pills .gp.active{background:var(--accent);color:#fff;}
+/* ═══ Dropdown de campanhas (modelo compacto) ═══ */
+.camp-dd-wrap{position:relative;display:inline-block;}
+.camp-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.6px;box-shadow:var(--sh);}
+.camp-btn.on{border-color:var(--accent);color:var(--accent);}
+.camp-dd{display:none;position:absolute;z-index:80;top:calc(100% + 6px);left:0;min-width:320px;max-width:440px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 12px 32px rgba(0,0,0,.28);padding:10px;}
+.camp-dd.open{display:block;}
+.camp-dd input[type=text]{width:100%;box-sizing:border-box;margin-bottom:8px;padding:6px 9px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:11px;font-family:inherit;outline:none;}
+.camp-dd .camp-list{max-height:260px;overflow:auto;}
+/* ═══ Drill-down de UTMs (Metabase) ═══ */
+.mb-row-click{cursor:pointer;}
+.mb-row-click:hover{background:var(--surface2);}
+.mb-row-sel{background:var(--surface2);box-shadow:inset 3px 0 0 #7c3aed;}
 </style>
 </head>
 <body>
@@ -331,13 +353,13 @@ details.desk-only{display:block!important;}
     <!-- META ADS (aba principal) -->
     <div class="page-section active" id="page-meta">
       <!-- Filtro de campanha — só desktop -->
-      <details style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0;margin-bottom:14px;box-shadow:var(--sh);" id="metaCampFilterDetails" class="desk-only">
-        <summary style="padding:10px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;list-style:none;display:flex;align-items:center;justify-content:space-between;user-select:none;">
-          Filtrar por campanha <span id="metaCampFilterCount" style="font-weight:400;font-size:10px"></span>
-          <span style="font-size:13px;color:var(--muted2)">▾</span>
-        </summary>
-        <div style="padding:0 14px 12px;" id="metaCampFilter"></div>
-      </details>
+      <div class="camp-dd-wrap desk-only" id="metaCampWrap" style="margin-bottom:14px">
+        <button class="camp-btn" id="metaCampBtn" onclick="toggleCampDd('metaCampDd')">Campanhas <span id="metaCampFilterCount" style="font-weight:400"></span> <span style="font-size:8px">▼</span></button>
+        <div class="camp-dd" id="metaCampDd">
+          <input type="text" placeholder="Buscar campanha..." oninput="filtraCampList('metaCampFilter',this.value)">
+          <div class="camp-list" id="metaCampFilter"></div>
+        </div>
+      </div>
       <div class="krow k3 mb14" id="metaKpis"></div>
       <!-- Funil -->
       <div class="funnel-card mb14"><div class="funnel-title">Funil de Captação · All Conversions</div><div class="funnel-steps" id="funnelSteps"></div></div>
@@ -348,10 +370,17 @@ details.desk-only{display:block!important;}
             <div class="cc-t" id="chMainTitle">Leads Diários & Investimento</div>
             <div class="cc-s" id="chMainSub">Conversões · Invest. (linha verde) · CPL (linha preta tracejada)</div>
           </div>
-          <div style="display:flex;gap:3px;background:var(--bg);padding:3px;border-radius:8px;border:1px solid var(--border);flex-shrink:0;">
-            <button id="modeConv" class="pb active" onclick="setChartMode('conversoes',this)" style="font-size:10px;padding:3px 9px">🎯 Conversões</button>
-            <button id="modeRec"  class="pb" onclick="setChartMode('reconhecimento',this)" style="font-size:10px;padding:3px 9px">📢 Alcance</button>
-            <button id="modeEng"  class="pb" onclick="setChartMode('engajamento',this)" style="font-size:10px;padding:3px 9px">💬 Engajamento</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;">
+            <div class="gran-pills">
+              <button class="gp active" onclick="setViewMeta('dia',this)">Diário</button>
+              <button class="gp" onclick="setViewMeta('sem',this)">Semanal</button>
+              <button class="gp" onclick="setViewMeta('mes',this)">Mensal</button>
+            </div>
+            <div style="display:flex;gap:3px;background:var(--bg);padding:3px;border-radius:8px;border:1px solid var(--border);flex-shrink:0;">
+              <button id="modeConv" class="pb active" onclick="setChartMode('conversoes',this)" style="font-size:10px;padding:3px 9px">🎯 Conversões</button>
+              <button id="modeRec"  class="pb" onclick="setChartMode('reconhecimento',this)" style="font-size:10px;padding:3px 9px">📢 Alcance</button>
+              <button id="modeEng"  class="pb" onclick="setChartMode('engajamento',this)" style="font-size:10px;padding:3px 9px">💬 Engajamento</button>
+            </div>
           </div>
         </div>
         <div class="cw" style="height:210px"><canvas id="chMetaMain"></canvas></div>
@@ -379,13 +408,16 @@ details.desk-only{display:block!important;}
 
     <!-- MÉTRICAS DIÁRIAS -->
     <div class="page-section" id="page-diario">
-      <details style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0;margin-bottom:14px;box-shadow:var(--sh);" id="campFilterDetails">
-        <summary style="padding:10px 14px;cursor:pointer;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;list-style:none;display:flex;align-items:center;justify-content:space-between;user-select:none;">
-          Filtrar por campanha <span id="campFilterCount" style="font-weight:400;font-size:10px"></span>
-          <span style="font-size:13px;color:var(--muted2)">▾</span>
-        </summary>
-        <div style="padding:0 14px 12px;" id="campFilter"></div>
-      </details>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <div class="camp-dd-wrap" id="campWrap">
+          <button class="camp-btn" id="campBtn" onclick="toggleCampDd('campDd')">Campanhas <span id="campFilterCount" style="font-weight:400"></span> <span style="font-size:8px">▼</span></button>
+          <div class="camp-dd" id="campDd">
+            <input type="text" placeholder="Buscar campanha..." oninput="filtraCampList('campFilter',this.value)">
+            <div class="camp-list" id="campFilter"></div>
+          </div>
+        </div>
+        <div id="diarioGran"></div>
+      </div>
       <div id="dailyCharts"></div>
     </div>
 
@@ -412,8 +444,17 @@ details.desk-only{display:block!important;}
     <div class="page-section" id="page-google">
       <div class="krow k4 mb14" id="gKpis"></div>
       <div class="cc mb14">
-        <div class="cc-t">Google Ads — Conversões & Investimento</div>
-        <div class="cc-s">Conversões (barras verdes) · Invest. (linha azul) · CPA (linha preta tracejada)</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+          <div>
+            <div class="cc-t">Google Ads — Conversões & Investimento</div>
+            <div class="cc-s">Conversões (barras verdes) · Invest. (linha azul) · CPA (linha preta tracejada)</div>
+          </div>
+          <div class="gran-pills">
+            <button class="gp active" onclick="setViewGoogle('dia',this)">Diário</button>
+            <button class="gp" onclick="setViewGoogle('sem',this)">Semanal</button>
+            <button class="gp" onclick="setViewGoogle('mes',this)">Mensal</button>
+          </div>
+        </div>
         <div class="cw" style="height:210px"><canvas id="chGoogle"></canvas></div>
       </div>
       <div class="section">
@@ -436,17 +477,23 @@ details.desk-only{display:block!important;}
     <!-- SEO -->
     <div class="page-section" id="page-seo">
       <div class="krow k3 mb14" id="seoKpis"></div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px" id="seoGranBar"></div>
       <div class="g2 mb14">
         <div class="cc">
-          <div class="cc-t">Impressões por Dia</div>
+          <div class="cc-t">Impressões</div>
           <div class="cc-s">Evolução de impressões orgânicas</div>
           <div class="cw" style="height:180px" id="chSeoImprWrap"><canvas id="chSeoImpr"></canvas></div>
         </div>
         <div class="cc">
-          <div class="cc-t">Cliques por Dia</div>
+          <div class="cc-t">Cliques</div>
           <div class="cc-s">Evolução de cliques orgânicos</div>
           <div class="cw" style="height:180px" id="chSeoClkWrap"><canvas id="chSeoClk"></canvas></div>
         </div>
+      </div>
+      <div class="cc mb14">
+        <div class="cc-t">CTR</div>
+        <div class="cc-s">Cliques / Impressões por período</div>
+        <div class="cw" style="height:160px" id="chSeoCtrWrap"><canvas id="chSeoCtr"></canvas></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-left:3px solid #f59e0b;border-radius:var(--r);padding:9px 12px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:1.5">
         <span style="font-size:13px">⚠️</span>
@@ -487,16 +534,18 @@ details.desk-only{display:block!important;}
 
       <div class="krow k4 mb14" id="mbKpis"></div>
 
-      <div class="g2 mb14">
+      <div class="g31 mb14">
         <div class="cc">
-          <div class="cc-t">Cadastros por Mês</div>
-          <div class="cc-s">Empilhado por verificação de e-mail</div>
-          <div class="cw" style="height:200px" id="chMbMonthWrap"><canvas id="chMbMonth"></canvas></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+            <div><div class="cc-t">Cadastros</div><div class="cc-s">Empilhado por verificação de e-mail · linha = % verificado</div></div>
+            <div id="mbGranCad"></div>
+          </div>
+          <div class="cw" style="height:230px" id="chMbCadWrap"><canvas id="chMbCad"></canvas></div>
         </div>
         <div class="cc">
-          <div class="cc-t">Cadastros por Dia</div>
-          <div class="cc-s">Evolução diária de novos assinantes</div>
-          <div class="cw" style="height:200px" id="chMbDailyWrap"><canvas id="chMbDaily"></canvas></div>
+          <div class="cc-t">Funil de Assinantes</div>
+          <div class="cc-s">Cadastro → verificação → onboarding → plano pago (snapshot do plano atual)</div>
+          <div id="mbFunnel" style="display:flex;flex-direction:column;gap:8px;padding:12px 4px 4px"></div>
         </div>
       </div>
 
@@ -522,14 +571,24 @@ details.desk-only{display:block!important;}
       </div>
 
       <div class="cc mb14">
-        <div class="cc-t">Planos Pagos por Mês</div>
-        <div class="cc-s">Business, Enterprise e Pro — empilhado por família</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+          <div><div class="cc-t">Planos Pagos</div><div class="cc-s">Business, Enterprise e Pro — empilhado por família · linha = % pagos sobre cadastros</div></div>
+          <div id="mbGranPaid"></div>
+        </div>
         <div class="cw" style="height:200px" id="chMbPaidWrap"><canvas id="chMbPaid"></canvas></div>
       </div>
 
-      <div class="section">
-        <div class="sec-hd">Cadastros e Planos por Origem</div>
+      <div class="section mb14">
+        <div class="sec-hd">Cadastros e Planos por Origem <span style="font-weight:400;font-size:9px;color:var(--muted2);text-transform:none;letter-spacing:0"> · clique numa origem para abrir as demais UTMs</span></div>
         <div class="tc" id="mbSrcTable"></div>
+      </div>
+
+      <div class="section" id="mbDrillSec" style="display:none">
+        <div class="sec-hd" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <span id="mbDrillTitle">UTMs da origem</span>
+          <button onclick="mbDrillClose()" style="border:1px solid var(--border);background:var(--surface2);color:var(--muted);border-radius:6px;font-size:10px;padding:3px 9px;cursor:pointer;font-family:inherit">✕ fechar</button>
+        </div>
+        <div id="mbDrillTables" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;padding:12px"></div>
       </div>
     </div>
 
@@ -650,6 +709,8 @@ const CPM_MEDIO=12.0;
 let filtroLct=true, periodDays=30, dateI=null, dateF=null, showLabels=true, labelSize=8;
 let chartMode='conversoes'; // 'conversoes' | 'reconhecimento' | 'engajamento'
 let pesFilters={};
+// Granularidade por aba: 'dia' | 'sem' | 'mes'
+let viewMeta='dia', viewDiario='dia', viewGoogle='dia', viewSeo='dia', viewMb='mes', viewMbPaid='mes';
 
 // ═══ UTILS ═══
 const fR=v=>(v==null||isNaN(v))?'—':'R$'+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -737,6 +798,110 @@ function applyPeriod(daily){
 
 function getMD(){return applyPeriod(getMDraw());}
 
+// ═══ COMPARAÇÃO COM PERÍODO ANTERIOR ═══
+// Recorta uma série diária {days:[],...arrays} por um range arbitrário {ini,fim}
+function applyRange(daily,rng){
+  if(!daily||!rng) return null;
+  const days=daily.days; if(!days?.length) return null;
+  const idxs=days.map((_,i)=>i).filter(i=>{const dt=parseDayStr(days[i]);return dt>=rng.ini&&dt<=rng.fim;});
+  if(!idxs.length) return null;
+  const out={};
+  Object.keys(daily).forEach(k=>{if(Array.isArray(daily[k]))out[k]=idxs.map(i=>daily[k][i]);});
+  return out;
+}
+// Range {ini,fim} do filtro global atual — null quando "Tudo" ou range aberto
+function rangeAtualG(){
+  if(dateI||dateF){
+    if(dateI&&dateF) return {ini:dateI,fim:dateF};
+    return null; // range aberto de um lado — sem duração p/ comparar
+  }
+  if(periodDays>0){
+    const fim=getHoje();
+    if(periodDays===1) fim.setDate(fim.getDate()-1);
+    fim.setHours(23,59,59,999);
+    const ini=new Date(fim);
+    ini.setDate(ini.getDate()-(periodDays===1?0:periodDays-1));
+    ini.setHours(0,0,0,0);
+    return {ini,fim};
+  }
+  return null; // Tudo
+}
+// Range imediatamente anterior, de mesma duração
+function rangeAnterior(a){
+  if(!a) return null;
+  const dias=Math.round((a.fim-a.ini)/86400000)+1;
+  const fim=new Date(a.ini); fim.setDate(fim.getDate()-1); fim.setHours(23,59,59,999);
+  const ini=new Date(fim); ini.setDate(ini.getDate()-(dias-1)); ini.setHours(0,0,0,0);
+  return {ini,fim};
+}
+function rangeAnteriorG(){return rangeAnterior(rangeAtualG());}
+const sumArr=a=>(a||[]).reduce((s,v)=>s+(v||0),0);
+// Badge ▲/▼ de variação — inverso=true quando cair é bom (CPL, CPA, CPM);
+// inverso='neutro' p/ métricas sem juízo de valor (ex.: investimento): mostra a seta em cinza
+function deltaBadge(atual,anterior,inverso){
+  if(anterior===null||anterior===undefined||isNaN(anterior)) return '';
+  if(anterior===0) return (atual>0)?'<span class="dlt up">novo</span> vs período anterior':'';
+  if(atual===null||atual===undefined||isNaN(atual)) return '';
+  const v=(atual-anterior)/anterior*100;
+  const bom=inverso===true?v<0:v>0;
+  const cls=inverso==='neutro'?'flat':(Math.abs(v)<0.5?'flat':(bom?'up':'down'));
+  const arw=v>0.5?'▲':(v<-0.5?'▼':'■');
+  return `<span class="dlt ${cls}">${arw} ${Math.abs(v).toFixed(0)}%</span> vs período anterior`;
+}
+
+// ═══ GRANULARIDADE (dia / semana / mês) ═══
+// Agrega uma série diária já filtrada; sumKeys somados, ratesFn recalcula taxas
+function aggDailyView(f,view,sumKeys,ratesFn){
+  if(!f||!f.days||view==='dia'||!view) return f;
+  const bk={},order=[];
+  f.days.forEach((s,i)=>{
+    const dt=parseDayStr(s); let key,lbl;
+    if(view==='sem'){
+      const d2=new Date(dt); const dow=(d2.getDay()+6)%7; d2.setDate(d2.getDate()-dow); // segunda-feira
+      key=d2.getFullYear()*10000+(d2.getMonth()+1)*100+d2.getDate();
+      lbl=String(d2.getDate()).padStart(2,'0')+'/'+String(d2.getMonth()+1).padStart(2,'0');
+    } else {
+      key=dt.getFullYear()*100+(dt.getMonth()+1);
+      lbl=String(dt.getMonth()+1).padStart(2,'0')+'/'+String(dt.getFullYear()).slice(2);
+    }
+    if(!bk[key]){bk[key]={lbl,idx:[]};order.push(key);}
+    bk[key].idx.push(i);
+  });
+  order.sort((a,b)=>a-b);
+  const out={days:order.map(k=>bk[k].lbl)};
+  sumKeys.forEach(k=>{
+    if(!f[k]) return;
+    out[k]=order.map(q=>bk[q].idx.reduce((a,i)=>a+(f[k][i]||0),0));
+  });
+  if(ratesFn) ratesFn(out);
+  return out;
+}
+function metaRates(o){
+  o.ctr=o.days.map((_,i)=>o.impressions?.[i]>0?r2((o.link_clicks?.[i]||0)/o.impressions[i]*100):null);
+  o.connect_rate=o.days.map((_,i)=>o.link_clicks?.[i]>0?r2((o.page_view?.[i]||0)/o.link_clicks[i]*100):null);
+  o.tx_conv=o.days.map((_,i)=>o.page_view?.[i]>0?r2((o.leads?.[i]||0)/o.page_view[i]*100):null);
+  o.cpl=o.days.map((_,i)=>o.leads?.[i]>0?r2((o.spend?.[i]||0)/o.leads[i]):null);
+  o.cpm=o.days.map((_,i)=>o.impressions?.[i]>0?r2((o.spend?.[i]||0)/o.impressions[i]*1000):null);
+  o.cpe=o.days.map((_,i)=>o.engagement?.[i]>0?r2((o.spend?.[i]||0)/o.engagement[i]):null);
+}
+function googleRates(o){
+  o.cpa=o.days.map((_,i)=>o.conversions?.[i]>0?r2((o.spend?.[i]||0)/o.conversions[i]):null);
+  o.cpc=o.days.map((_,i)=>o.clicks?.[i]>0?r2((o.spend?.[i]||0)/o.clicks[i]):null);
+  o.ctr=o.days.map((_,i)=>o.impressions?.[i]>0?r2((o.clicks?.[i]||0)/o.impressions[i]*100):null);
+}
+const GRAN_LBL={dia:'Diário',sem:'Semanal',mes:'Mensal'};
+function granPills(fn,cur){
+  return `<div class="gran-pills">${['dia','sem','mes'].map(v=>
+    `<button class="gp${v===cur?' active':''}" onclick="${fn}('${v}',this)">${GRAN_LBL[v]}</button>`).join('')}</div>`;
+}
+function granUi(b){const bar=b.closest('.gran-pills');if(bar)bar.querySelectorAll('.gp').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+function setViewMeta(v,b){viewMeta=v;granUi(b);renderMeta();}
+function setViewDiario(v,b){viewDiario=v;granUi(b);renderDiarioCharts();}
+function setViewGoogle(v,b){viewGoogle=v;granUi(b);renderGoogle();}
+function setViewSeo(v,b){viewSeo=v;granUi(b);renderSeo();}
+function setViewMb(v,b){viewMb=v;granUi(b);renderMetabase();}
+function setViewMbPaid(v,b){viewMbPaid=v;granUi(b);renderMetabase();}
+
 // ═══ CHARTS ═══
 const CH={},PC={};
 function dc(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
@@ -823,10 +988,15 @@ function renderMeta(){
   const ldMK=md?.leads?.reduce((a,b)=>a+(b||0),0)||0;
   const cplMK=spMK>0&&ldMK>0?r2(spMK/ldMK):null;
   const cplCor=cplMK!=null?(cplMK<=CPL_BOM?'#059669':cplMK<=CPL_MEDIO?'#d97706':'#dc2626'):'var(--muted)';
+  // Período anterior de mesma duração — setinhas de variação
+  const rngAnt=rangeAnteriorG();
+  const pv=rngAnt?metaDailyRange(rngAnt):null;
+  const pSp=pv?sumArr(pv.spend):null, pLd=pv?sumArr(pv.leads):null;
+  const pCpl=(pv&&pLd>0)?r2(pSp/pLd):(pv?0:null);
   document.getElementById('metaKpis').innerHTML=`
-    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="font-size:16px;color:var(--text)">${fR(spMK)}</div><div class="kpi-sub">Meta Ads</div></div>
-    <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Leads</div><div class="kpi-val" style="color:var(--text)">${fN(ldMK)}</div><div class="kpi-sub">captados no período</div></div>
-    <div class="kpi" style="--kc:${cplCor}"><div class="kpi-lbl">CPL</div><div class="kpi-val" style="color:${cplCor}">${fR(cplMK)}</div><div class="kpi-sub">Custo por Lead</div></div>`;
+    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="font-size:16px;color:var(--text)">${fR(spMK)}</div><div class="kpi-sub">${deltaBadge(spMK,pSp,'neutro')||'Meta Ads'}</div></div>
+    <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Leads</div><div class="kpi-val" style="color:var(--text)">${fN(ldMK)}</div><div class="kpi-sub">${deltaBadge(ldMK,pLd)||'captados no período'}</div></div>
+    <div class="kpi" style="--kc:${cplCor}"><div class="kpi-lbl">CPL</div><div class="kpi-val" style="color:${cplCor}">${fR(cplMK)}</div><div class="kpi-sub">${deltaBadge(cplMK,pCpl,true)||'Custo por Lead'}</div></div>`;
 
   // Funil recalculado do período + campanha
   const funnelKpis={
@@ -845,26 +1015,28 @@ function renderMeta(){
 
   // Gráfico — modo dinâmico: conversoes | reconhecimento | engajamento
   dc('chMetaMain');
+  // Agregação conforme granularidade (dia/semana/mês)
+  const mdv=aggDailyView(md,viewMeta,['spend','impressions','link_clicks','page_view','leads','engagement'],metaRates);
   const MODES={
     conversoes:{
-      title:'Leads Diários & Investimento',
+      title:'Leads & Investimento',
       sub:'Conversões · Invest. (linha verde) · CPL (linha preta tracejada)',
-      barLabel:'Leads', barData:md.leads, barColor:'rgba(59,130,246,.7)', barTick:v=>fN(v),
-      lineLabel:'CPL',  lineData:md.cpl,  lineFmt:v=>v!=null?'R$'+v.toFixed(2):null,
+      barLabel:'Leads', barData:mdv.leads, barColor:'rgba(59,130,246,.7)', barTick:v=>fN(v),
+      lineLabel:'CPL',  lineData:mdv.cpl,  lineFmt:v=>v!=null?'R$'+v.toFixed(2):null,
       y1Color:'#3b82f6',
     },
     reconhecimento:{
       title:'Impressões & Investimento',
       sub:'Impressões (barras roxas) · Invest. (linha verde) · CPM (linha preta tracejada)',
-      barLabel:'Impressões', barData:md.impressions, barColor:'rgba(139,92,246,.7)', barTick:v=>fN(v),
-      lineLabel:'CPM',       lineData:md.cpm,         lineFmt:v=>v!=null?'R$'+v.toFixed(2):null,
+      barLabel:'Impressões', barData:mdv.impressions, barColor:'rgba(139,92,246,.7)', barTick:v=>fN(v),
+      lineLabel:'CPM',       lineData:mdv.cpm,         lineFmt:v=>v!=null?'R$'+v.toFixed(2):null,
       y1Color:'#8b5cf6',
     },
     engajamento:{
       title:'Engajamentos & Investimento',
       sub:'Engajamentos (barras laranja) · Invest. (linha verde) · Custo/Eng. (linha preta tracejada)',
-      barLabel:'Engajamentos', barData:md.engagement, barColor:'rgba(249,115,22,.7)', barTick:v=>fN(v),
-      lineLabel:'CPE',         lineData:md.cpe,        lineFmt:v=>v!=null?'R$'+v.toFixed(2):null,
+      barLabel:'Engajamentos', barData:mdv.engagement, barColor:'rgba(249,115,22,.7)', barTick:v=>fN(v),
+      lineLabel:'CPE',         lineData:mdv.cpe,        lineFmt:v=>v!=null?'R$'+v.toFixed(2):null,
       y1Color:'#f97316',
     },
   };
@@ -873,10 +1045,10 @@ function renderMeta(){
   const tEl=document.getElementById('chMainTitle'); if(tEl) tEl.textContent=M.title;
   const sEl=document.getElementById('chMainSub');   if(sEl) sEl.textContent=M.sub;
   CH['chMetaMain']=new Chart(document.getElementById('chMetaMain'),{
-    data:{labels:md.days,datasets:[
+    data:{labels:mdv.days,datasets:[
       {label:M.barLabel,data:M.barData,backgroundColor:M.barColor,borderRadius:3,type:'bar',yAxisID:'y1',
        datalabels:{...makeDatalabels(M.y1Color,'',v=>v!=null?M.barTick(v):null),display:ctx=>showLabels}},
-      {label:'Invest.',data:md.spend,borderColor:'#059669',backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,type:'line',spanGaps:true,datalabels:{display:false}},
+      {label:'Invest.',data:mdv.spend,borderColor:'#059669',backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:2,type:'line',spanGaps:true,datalabels:{display:false}},
       {label:M.lineLabel,data:M.lineData,borderColor:DARK()?'#fff':'#111',borderDash:[5,3],backgroundColor:'transparent',tension:.3,pointRadius:2,borderWidth:1.5,type:'line',yAxisID:'y2',spanGaps:true,
        datalabels:{display:ctx=>showLabels,color:DARK()?'#fff':'#111',font:{size:labelSize,weight:'bold'},formatter:M.lineFmt,anchor:'end',align:'top',offset:2,clip:false}},
     ]},
@@ -1279,6 +1451,28 @@ function renderSeg(){
 // ═══ MÉTRICAS DIÁRIAS ═══
 let campFilterSel=new Set(); // Set vazio = todas as campanhas
 
+// ═══ DROPDOWN DE CAMPANHAS (compartilhado Meta/Diário) ═══
+function toggleCampDd(id){document.getElementById(id)?.classList.toggle('open');}
+document.addEventListener('click',e=>{
+  [['metaCampWrap','metaCampDd'],['campWrap','campDd']].forEach(([w,d])=>{
+    const wrap=document.getElementById(w);
+    if(wrap&&!wrap.contains(e.target)) document.getElementById(d)?.classList.remove('open');
+  });
+});
+function filtraCampList(listId,q){
+  q=(q||'').toLowerCase();
+  document.querySelectorAll('#'+listId+' label').forEach(it=>{
+    if(it.querySelector('#cb_todas,#meta_cb_todas')) return; // "Todas" sempre visível
+    it.style.display=it.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+function updateCampBtnUi(btnId,cntId,sel,total){
+  const n=sel?sel.size:0;
+  const cnt=document.getElementById(cntId);
+  if(cnt) cnt.textContent=n?`(${n}/${total})`:(total?`(${total})`:'');
+  document.getElementById(btnId)?.classList.toggle('on',!!n);
+}
+
 // ═══ FILTRO CAMPANHA — ABA META ═══
 let metaCampSel=new Set(); // Set vazio = todas
 
@@ -1313,6 +1507,7 @@ function buildMetaCampFilter(){
 function toggleMetaTodas(cb){
   document.querySelectorAll('.meta-camp-cb').forEach(c=>{c.checked=cb.checked;});
   metaCampSel=new Set();
+  updateCampBtnUi('metaCampBtn','metaCampFilterCount',metaCampSel,document.querySelectorAll('.meta-camp-cb').length);
   renderMeta();
 }
 function onMetaCampCheck(){
@@ -1321,7 +1516,24 @@ function onMetaCampCheck(){
   const todasCb=document.getElementById('meta_cb_todas');
   if(todasCb) todasCb.checked=(checked.length===all.length);
   metaCampSel=checked.length===all.length?new Set():new Set(checked);
+  updateCampBtnUi('metaCampBtn','metaCampFilterCount',metaCampSel,all.length);
   renderMeta();
+}
+// Série diária Meta recortada por range arbitrário, respeitando o filtro de campanha da aba
+function metaDailyRange(rng){
+  const raw=getMDraw(); if(!raw||!rng) return null;
+  if(!META_DAILY_CAMPS||metaCampSel.size===0) return applyRange(raw,rng);
+  const base=filtroLct?META_DAILY_CAMPS?.lct:META_DAILY_CAMPS?.all;
+  if(!base) return applyRange(raw,rng);
+  const sel=[...metaCampSel].map(c=>applyRange(base[c],rng)).filter(Boolean);
+  if(!sel.length) return null;
+  if(sel.length===1) return sel[0];
+  const ref=applyRange(raw,rng); if(!ref) return null;
+  const out={days:ref.days};
+  ['spend','impressions','link_clicks','page_view','leads','engagement'].forEach(k=>{
+    out[k]=ref.days.map(day=>sel.reduce((s,x)=>{const i=x.days?.indexOf(day);return s+(i>=0?(x[k]?.[i]||0):0);},0));
+  });
+  return out;
 }
 function getMDforMeta(){
   // Retorna daily filtrado pelas campanhas selecionadas no filtro da aba Meta
@@ -1375,6 +1587,7 @@ function buildCampFilter(){
 function toggleTodas(cb){
   document.querySelectorAll('.camp-cb').forEach(c=>{c.checked=cb.checked;});
   campFilterSel=new Set();
+  updateCampBtnUi('campBtn','campFilterCount',campFilterSel,document.querySelectorAll('.camp-cb').length);
   renderDiarioCharts();
 }
 function onCampCheck(){
@@ -1383,6 +1596,7 @@ function onCampCheck(){
   const todasCb=document.getElementById('cb_todas');
   if(todasCb) todasCb.checked=(checked.length===all.length);
   campFilterSel=checked.length===all.length?new Set():new Set(checked);
+  updateCampBtnUi('campBtn','campFilterCount',campFilterSel,all.length);
   renderDiarioCharts();
 }
 
@@ -1424,8 +1638,13 @@ function renderDiario(){
 }
 
 function renderDiarioCharts(){
-  const md=getDailyForCamp()||getMD();
-  if(!md) return;
+  // Pills de granularidade (uma vez)
+  const dg=document.getElementById('diarioGran');
+  if(dg&&!dg.innerHTML) dg.innerHTML=granPills('setViewDiario',viewDiario);
+  const mdRaw=getDailyForCamp()||getMD();
+  if(!mdRaw) return;
+  // Agregação conforme granularidade — taxas recalculadas dos somatórios
+  const md=aggDailyView(mdRaw,viewDiario,['spend','impressions','link_clicks','page_view','leads'],metaRates);
 
   // Médias corretas: somar numerador/denominador, não média de taxas
   const totImp = (md.impressions||[]).reduce((a,b)=>a+(b||0),0);
@@ -1692,15 +1911,26 @@ function renderGoogle(){
   // Dólar — usado em todo o Google Ads
   const fD=v=>(v==null||isNaN(v))?'—':'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 
+  // Variação vs período anterior — calculada do GOOGLE_RAW
+  const rngAntG=rangeAnteriorG();
+  let pg=null;
+  if(rngAntG&&GOOGLE_RAW?.length){
+    const prev=GOOGLE_RAW.filter(r=>{const dt=parseDayStr(r.d);return dt>=rngAntG.ini&&dt<=rngAntG.fim;});
+    if(prev.length){
+      const sp=prev.reduce((a,r)=>a+r.sp,0),cv=prev.reduce((a,r)=>a+r.cv,0),cl=prev.reduce((a,r)=>a+r.cl,0);
+      pg={spend:sp,conversions:cv,clicks:cl,cpa:cv>0?sp/cv:0};
+    } else pg={spend:0,conversions:0,clicks:0,cpa:0};
+  }
   // KPIs
   document.getElementById('gKpis').innerHTML=`
-    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="font-size:16px;color:var(--text)">${fD(gk.spend)}</div><div class="kpi-sub">Google Ads</div></div>
-    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Conversões</div><div class="kpi-val" style="color:var(--text)">${fConv(gk.conversions)}</div><div class="kpi-sub">All Conversions</div></div>
-    <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--text)">${fN(gk.clicks)}</div><div class="kpi-sub">CTR: ${fP(gk.ctr)}</div></div>
-    <div class="kpi" style="--kc:${cpaCls(gk.cpa)==='cg'?'#059669':cpaCls(gk.cpa)==='cw2'?'#d97706':'#dc2626'}"><div class="kpi-lbl">CPA</div><div class="kpi-val ${cpaCls(gk.cpa)}">${fD(gk.cpa)}</div><div class="kpi-sub">CPC: ${fD(gk.cpc)}</div></div>`;
+    <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="font-size:16px;color:var(--text)">${fD(gk.spend)}</div><div class="kpi-sub">${deltaBadge(gk.spend,pg?.spend,'neutro')||'Google Ads'}</div></div>
+    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Conversões</div><div class="kpi-val" style="color:var(--text)">${fConv(gk.conversions)}</div><div class="kpi-sub">${deltaBadge(gk.conversions,pg?.conversions)||'All Conversions'}</div></div>
+    <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--text)">${fN(gk.clicks)}</div><div class="kpi-sub">${deltaBadge(gk.clicks,pg?.clicks)||('CTR: '+fP(gk.ctr))}</div></div>
+    <div class="kpi" style="--kc:${cpaCls(gk.cpa)==='cg'?'#059669':cpaCls(gk.cpa)==='cw2'?'#d97706':'#dc2626'}"><div class="kpi-lbl">CPA</div><div class="kpi-val ${cpaCls(gk.cpa)}">${fD(gk.cpa)}</div><div class="kpi-sub">${deltaBadge(gk.cpa,pg?.cpa,true)||('CPC: '+fD(gk.cpc))}</div></div>`;
 
-  // Gráfico — filtrado pelo período selecionado
-  const gd=applyPeriod(GOOGLE_DAILY); dc('chGoogle');
+  // Gráfico — filtrado pelo período selecionado + granularidade
+  const gd0=applyPeriod(GOOGLE_DAILY); dc('chGoogle');
+  const gd=gd0?aggDailyView(gd0,viewGoogle,['spend','conversions','clicks','impressions'],googleRates):null;
   if(gd){
     const convInt=(gd.conversions||[]).map(v=>v!=null?Math.round(v):null);
     CH['chGoogle']=new Chart(document.getElementById('chGoogle'),{
@@ -1885,13 +2115,22 @@ function renderSeo(){
   const totImp=(sd0?.impressions||[]).reduce((a,b)=>a+b,0);
   const totClk=(sd0?.clicks||[]).reduce((a,b)=>a+b,0);
   const ctr=totImp>0?r2(totClk/totImp*100):null;
+  // Período anterior de mesma duração — setinhas de variação
+  const rngAntS=rangeAnteriorG();
+  const prevSd=rngAntS?applyRange(SEO_DAILY,rngAntS):null;
+  const pImp=prevSd?sumArr(prevSd.impressions):null;
+  const pClk=prevSd?sumArr(prevSd.clicks):null;
+  const pCtr=prevSd?(pImp>0?r2(pClk/pImp*100):0):null;
   document.getElementById('seoKpis').innerHTML=`
-    <div class="kpi" style="--kc:#8b5cf6"><div class="kpi-lbl">Impressões Orgânicas</div><div class="kpi-val" style="color:var(--text)">${fN(totImp)}</div><div class="kpi-sub">Search Console</div></div>
-    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Cliques Orgânicos</div><div class="kpi-val" style="color:var(--text)">${fN(totClk)}</div><div class="kpi-sub">Search Console</div></div>
-    <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">CTR Médio</div><div class="kpi-val" style="color:var(--text)">${ctr!=null?ctr+'%':'—'}</div><div class="kpi-sub">Cliques / Impressões</div></div>`;
+    <div class="kpi" style="--kc:#8b5cf6"><div class="kpi-lbl">Impressões Orgânicas</div><div class="kpi-val" style="color:var(--text)">${fN(totImp)}</div><div class="kpi-sub">${deltaBadge(totImp,pImp)||'Search Console'}</div></div>
+    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Cliques Orgânicos</div><div class="kpi-val" style="color:var(--text)">${fN(totClk)}</div><div class="kpi-sub">${deltaBadge(totClk,pClk)||'Search Console'}</div></div>
+    <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">CTR Médio</div><div class="kpi-val" style="color:var(--text)">${ctr!=null?ctr+'%':'—'}</div><div class="kpi-sub">${deltaBadge(ctr,pCtr)||'Cliques / Impressões'}</div></div>`;
 
-  // Gráficos diários — filtrados pelo período
-  const sd=applyPeriod(SEO_DAILY);
+  // Gráficos — filtrados pelo período + granularidade dia/semana/mês
+  const gBar=document.getElementById('seoGranBar');
+  if(gBar)gBar.innerHTML=granPills('setViewSeo',viewSeo);
+  const sd=aggDailyView(applyPeriod(SEO_DAILY),viewSeo,['impressions','clicks']);
+  if(sd&&sd.days) sd.ctr=sd.days.map((_,i)=>sd.impressions?.[i]>0?r2((sd.clicks?.[i]||0)/sd.impressions[i]*100):null);
   // Garante que o canvas existe (pode ter sido substituído pela msg de vazio)
   const seoCanvas=id=>{
     let c=document.getElementById(id);
@@ -1902,14 +2141,14 @@ function renderSeo(){
     return c;
   };
   if(!sd || !sd.days?.length){
-    ['chSeoImpr','chSeoClk'].forEach(id=>{
+    ['chSeoImpr','chSeoClk','chSeoCtr'].forEach(id=>{
       dc(id);
       const w=document.getElementById(id+'Wrap');
       if(w) w.innerHTML='<div style="height:100%;min-height:160px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Sem dados de SEO no período selecionado</div>';
     });
   }
   if(sd && sd.days?.length){
-    seoCanvas('chSeoImpr'); seoCanvas('chSeoClk');
+    seoCanvas('chSeoImpr'); seoCanvas('chSeoClk'); seoCanvas('chSeoCtr');
     dc('chSeoImpr');
     CH['chSeoImpr']=new Chart(document.getElementById('chSeoImpr'),{type:'line',
       data:{labels:sd.days,datasets:[
@@ -1923,6 +2162,14 @@ function renderSeo(){
         {label:'Cliques',data:sd.clicks,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.12)',fill:true,tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,datalabels:{display:ctx=>showLabels,color:'#059669',font:{size:labelSize,weight:'bold'},anchor:'top',align:'top',offset:2,clip:false,formatter:v=>v!=null?fN(v):null}},
       ]},
       options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
+    });
+    dc('chSeoCtr');
+    CH['chSeoCtr']=new Chart(document.getElementById('chSeoCtr'),{type:'line',
+      data:{labels:sd.days,datasets:[
+        {label:'CTR',data:sd.ctr,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.10)',fill:true,tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,datalabels:{display:ctx=>showLabels,color:'#3b82f6',font:{size:labelSize,weight:'bold'},anchor:'top',align:'top',offset:2,clip:false,formatter:v=>v!=null?v.toFixed(2)+'%':null}},
+      ]},
+      options:{...bo(),plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'CTR: '+(c.raw!=null?c.raw.toFixed(2)+'%':'—')}},datalabels:{display:false}},
+        scales:{x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf,callback:v=>v+'%'},grid:{color:GRID()},min:0}}}
     });
   }
 
@@ -1990,6 +2237,7 @@ function renderSeo(){
 // ═══ METABASE (assinantes) ═══
 // Filtro próprio, independente do global — baseado em subscribed_at
 let mbDays=0, mbDateI=null, mbDateF=null; // padrão: Tudo
+let mbDrillSrc=null, mbSrcList=[];
 const MB_COLS=['#7c3aed','#a78bfa','#4c1d95','#c4b5fd','#5b21b6','#ddd6fe','#2e1065','#ede9fe'];
 
 function mbPlanFamily(p){
@@ -2003,32 +2251,44 @@ function mbPlanFamily(p){
 }
 const MB_PAID_FAM=['Business','Enterprise','Pro'];
 
-// Decodifica METABASE_DATA {s:[origens],p:[planos],r:[[yymmdd,si,pi,ver,n],...]} uma única vez
+// Decodifica METABASE_DATA {s,p,m,c,t,r:[[yymmdd,si,pi,ver,n,mi,ci,ti],...]} uma única vez
 let _mbRows=null;
 function mbRows(){
   if(_mbRows) return _mbRows;
   if(!METABASE_DATA||!METABASE_DATA.r) return null;
-  const S=METABASE_DATA.s,P=METABASE_DATA.p;
+  const S=METABASE_DATA.s,P=METABASE_DATA.p,M=METABASE_DATA.m||[],C=METABASE_DATA.c||[],T=METABASE_DATA.t||[];
   _mbRows=METABASE_DATA.r.map(r=>{
     const d=String(r[0]);
     const dt=new Date(2000+parseInt(d.slice(0,2),10),parseInt(d.slice(2,4),10)-1,parseInt(d.slice(4,6),10));
-    return {dt,src:S[r[1]],plan:P[r[2]],fam:mbPlanFamily(P[r[2]]),ver:r[3]===1,n:r[4]};
+    return {dt,src:S[r[1]],plan:P[r[2]],fam:mbPlanFamily(P[r[2]]),ver:r[3]===1,n:r[4],
+            med:M[r[5]]??'(sem utm)',cont:C[r[6]]??'(sem utm)',term:T[r[7]]??'(sem utm)'};
   });
   return _mbRows;
 }
 
-function mbFiltered(){
-  const rows=mbRows(); if(!rows) return null;
-  let ini=null,fim=null;
-  if(mbDays>0){
-    fim=getHoje(); fim.setHours(23,59,59,999);
-    ini=new Date(fim); ini.setDate(ini.getDate()-(mbDays-1)); ini.setHours(0,0,0,0);
+// Range {ini,fim} do filtro local do Metabase — null quando "Tudo"/range aberto
+function rangeAtualMb(){
+  if(mbDateI||mbDateF){
+    if(mbDateI&&mbDateF) return {ini:mbDateI,fim:mbDateF};
+    return null;
   }
-  if(mbDateI) ini=mbDateI;
-  if(mbDateF) fim=mbDateF;
-  if(!ini&&!fim) return rows;
-  return rows.filter(r=>(!ini||r.dt>=ini)&&(!fim||r.dt<=fim));
+  if(mbDays>0){
+    const fim=getHoje(); fim.setHours(23,59,59,999);
+    const ini=new Date(fim); ini.setDate(ini.getDate()-(mbDays-1)); ini.setHours(0,0,0,0);
+    return {ini,fim};
+  }
+  return null;
 }
+function mbFilterByRange(rng){
+  const rows=mbRows(); if(!rows) return null;
+  if(!rng){
+    // range aberto de um lado ainda filtra; "Tudo" (sem nada) devolve tudo
+    if(!mbDateI&&!mbDateF&&!(mbDays>0)) return rows;
+    return rows.filter(r=>(!mbDateI||r.dt>=mbDateI)&&(!mbDateF||r.dt<=mbDateF));
+  }
+  return rows.filter(r=>r.dt>=rng.ini&&r.dt<=rng.fim);
+}
+function mbFiltered(){return mbFilterByRange(rangeAtualMb());}
 
 function setMbPeriod(days,btn){
   mbDays=days; mbDateI=null; mbDateF=null;
@@ -2047,7 +2307,7 @@ function mbDonut(id,legId,entries,total){
     data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:MB_COLS.slice(0,entries.length),borderWidth:0}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{
       legend:{display:false},
-      datalabels:{display:true,color:'#fff',font:{size:9,weight:'bold'},
+      datalabels:{display:ctx=>showLabels,color:'#fff',font:{size:Math.max(9,labelSize),weight:'bold'},
         formatter:(v,ctx)=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return t>0&&v/t>0.05?(v/t*100).toFixed(0)+'%':null;}}
     }}
   });
@@ -2059,64 +2319,118 @@ function mbDonut(id,legId,entries,total){
     </div>`).join('');
 }
 
+// Série "diária" (dd/mm/yy) a partir das linhas filtradas — p/ aggDailyView
+function mbDailySeries(rows,fields){
+  const dd={};
+  rows.forEach(r=>{
+    const k=r.dt.getTime();
+    const o=dd[k]=dd[k]||{};
+    fields.forEach(f=>{o[f.k]=(o[f.k]||0)+(f.val(r)||0);});
+  });
+  const keys=Object.keys(dd).map(Number).sort((a,b)=>a-b);
+  const lbl=t=>{const d=new Date(t);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2);};
+  const out={days:keys.map(lbl)};
+  fields.forEach(f=>{out[f.k]=keys.map(t=>dd[t][f.k]||0);});
+  return out;
+}
+
+// Rótulos de barras empilhadas — obedecem ao toggle global "Rótulos"
+function mbBarLabels(color){
+  return {display:ctx=>showLabels&&(ctx.dataset.data[ctx.dataIndex]||0)>0,
+    color:color||'#fff',font:{size:labelSize,weight:'bold'},formatter:v=>v>0?fN(v):null};
+}
+
+// Funil HTML: Cadastrados → Verificados → Onboarding → Pagos
+function mbFunnelHtml(tot,ver,onb,paid){
+  const steps=[
+    {lbl:'Cadastrados',v:tot,c:'#7c3aed'},
+    {lbl:'E-mail verificado',v:ver,c:'#059669'},
+    {lbl:'Onboarding',v:onb,c:'#f59e0b'},
+    {lbl:'Planos pagos',v:paid,c:'#3b82f6'},
+  ];
+  const max=Math.max(tot,1);
+  return steps.map((s,i)=>{
+    const w=Math.max(s.v/max*100,2).toFixed(1);
+    const pTot=tot>0?(s.v/tot*100):0;
+    const prev=i>0?steps[i-1].v:null;
+    const pPrev=(prev&&prev>0)?(s.v/prev*100):null;
+    const sub=i===0?'100%':`${pTot<1&&pTot>0?pTot.toFixed(2):pTot.toFixed(1)}% do total${pPrev!=null?` · ${pPrev<1&&pPrev>0?pPrev.toFixed(2):pPrev.toFixed(1)}% da etapa anterior`:''}`;
+    return `<div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
+        <span style="font-weight:700;color:var(--text)">${s.lbl}</span>
+        <span style="color:var(--muted)">${fN(s.v)} <span style="color:var(--muted2)">· ${sub}</span></span>
+      </div>
+      <div style="height:22px;background:var(--surface2);border-radius:6px;overflow:hidden">
+        <div style="height:100%;width:${w}%;background:${s.c};border-radius:6px;transition:width .4s"></div>
+      </div>
+    </div>`;}).join('')+
+    `<div style="font-size:9px;color:var(--muted2);line-height:1.5;margin-top:2px">* Etapas por plano atual (snapshot): "Onboarding" = plano onboarding hoje; quem já virou pago não conta mais nessa etapa.</div>`;
+}
+
 function renderMetabase(){
   const rows=mbFiltered(); if(!rows) return;
+  const gc=document.getElementById('mbGranCad'); if(gc)gc.innerHTML=granPills('setViewMb',viewMb);
+  const gp=document.getElementById('mbGranPaid'); if(gp)gp.innerHTML=granPills('setViewMbPaid',viewMbPaid);
+
   const tot=rows.reduce((a,r)=>a+r.n,0);
   const totVer=rows.filter(r=>r.ver).reduce((a,r)=>a+r.n,0);
+  const totOnb=rows.filter(r=>r.fam==='Onboarding').reduce((a,r)=>a+r.n,0);
   const totPaid=rows.filter(r=>MB_PAID_FAM.includes(r.fam)).reduce((a,r)=>a+r.n,0);
   const totUtm=rows.filter(r=>r.src!=='(sem utm)').reduce((a,r)=>a+r.n,0);
   const pct=(a,b)=>b>0?(a/b*100).toFixed(1)+'%':'—';
 
-  // KPIs
+  // Período anterior de mesma duração (filtro local) — setinhas de variação
+  const rngAntMb=rangeAnterior(rangeAtualMb());
+  const pv=rngAntMb?mbFilterByRange(rngAntMb):null;
+  const pTot=pv?pv.reduce((a,r)=>a+r.n,0):null;
+  const pVer=pv?pv.filter(r=>r.ver).reduce((a,r)=>a+r.n,0):null;
+  const pPaid=pv?pv.filter(r=>MB_PAID_FAM.includes(r.fam)).reduce((a,r)=>a+r.n,0):null;
+  const pVerPct=pv?(pTot>0?pVer/pTot*100:0):null;
+  const verPct=tot>0?totVer/tot*100:0;
+
   document.getElementById('mbKpis').innerHTML=`
-    <div class="kpi" style="--kc:#7c3aed"><div class="kpi-lbl">Total de Cadastros</div><div class="kpi-val" style="color:var(--text)">${fN(tot)}</div><div class="kpi-sub">assinantes no período</div></div>
-    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">E-mail Verificado</div><div class="kpi-val" style="color:var(--text)">${pct(totVer,tot)}</div><div class="kpi-sub">${fN(totVer)} verificados</div></div>
-    <div class="kpi" style="--kc:#f59e0b"><div class="kpi-lbl">Planos Pagos</div><div class="kpi-val" style="color:var(--text)">${fN(totPaid)}</div><div class="kpi-sub">${pct(totPaid,tot)} do total (Business/Enterprise/Pro)</div></div>
+    <div class="kpi" style="--kc:#7c3aed"><div class="kpi-lbl">Total de Cadastros</div><div class="kpi-val" style="color:var(--text)">${fN(tot)}</div><div class="kpi-sub">${deltaBadge(tot,pTot)||'assinantes no período'}</div></div>
+    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">E-mail Verificado</div><div class="kpi-val" style="color:var(--text)">${pct(totVer,tot)}</div><div class="kpi-sub">${deltaBadge(verPct,pVerPct)||fN(totVer)+' verificados'}</div></div>
+    <div class="kpi" style="--kc:#f59e0b"><div class="kpi-lbl">Planos Pagos</div><div class="kpi-val" style="color:var(--text)">${fN(totPaid)}</div><div class="kpi-sub">${deltaBadge(totPaid,pPaid)||pct(totPaid,tot)+' do total'}</div></div>
     <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Com UTM</div><div class="kpi-val" style="color:var(--text)">${pct(totUtm,tot)}</div><div class="kpi-sub">${fN(totUtm)} cadastros rastreados</div></div>`;
 
   if(!tot){
-    ['chMbMonth','chMbDaily','chMbPaid'].forEach(id=>{dc(id);
+    ['chMbCad','chMbPaid'].forEach(id=>{dc(id);
       const w=document.getElementById(id+'Wrap');
       if(w)w.innerHTML='<div style="height:100%;min-height:160px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Sem cadastros no período selecionado</div>';});
     ['chMbVer','chMbPlan','chMbSrc'].forEach(id=>{if(PC[id]){PC[id].destroy();delete PC[id];}});
     ['mbVerLeg','mbPlanLeg','mbSrcLeg'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='';});
+    document.getElementById('mbFunnel').innerHTML='<div style="padding:14px;color:var(--muted);font-size:12px">Sem dados no período.</div>';
     document.getElementById('mbSrcTable').innerHTML='<div style="padding:14px;color:var(--muted);font-size:12px">Sem dados no período.</div>';
+    mbDrillClose();
     return;
   }
   // Restaura canvases se necessário
-  ['chMbMonth','chMbDaily','chMbPaid'].forEach(id=>{
+  ['chMbCad','chMbPaid'].forEach(id=>{
     if(!document.getElementById(id)){const w=document.getElementById(id+'Wrap');if(w)w.innerHTML='<canvas id="'+id+'"></canvas>';}
   });
 
-  const ymKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-  const ymLbl=k=>{const[y,m]=k.split('-');return m+'/'+y.slice(2);};
-  const dKey=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2);
-
-  // Cadastros por mês, empilhado por verificado
-  const mm={};
-  rows.forEach(r=>{const k=ymKey(r.dt);(mm[k]=mm[k]||{v:0,nv:0})[r.ver?'v':'nv']+=r.n;});
-  const mKeys=Object.keys(mm).sort();
-  dc('chMbMonth');
-  CH['chMbMonth']=new Chart(document.getElementById('chMbMonth'),{type:'bar',
-    data:{labels:mKeys.map(ymLbl),datasets:[
-      {label:'Verificado',data:mKeys.map(k=>mm[k].v),backgroundColor:'rgba(5,150,105,.8)',borderRadius:3,stack:'s',datalabels:{display:false}},
-      {label:'Não verificado',data:mKeys.map(k=>mm[k].nv),backgroundColor:'rgba(148,163,184,.55)',borderRadius:3,stack:'s',datalabels:{display:false}},
+  // Cadastros (dia/semana/mês) — empilhado por verificação + linha % verificado
+  const cadDaily=mbDailySeries(rows,[{k:'ver',val:r=>r.ver?r.n:0},{k:'nver',val:r=>r.ver?0:r.n}]);
+  const cad=aggDailyView(cadDaily,viewMb,['ver','nver']);
+  const cadPct=cad.days.map((_,i)=>{const t=(cad.ver[i]||0)+(cad.nver[i]||0);return t>0?r2((cad.ver[i]||0)/t*100):null;});
+  dc('chMbCad');
+  CH['chMbCad']=new Chart(document.getElementById('chMbCad'),{type:'bar',
+    data:{labels:cad.days,datasets:[
+      {type:'line',label:'% verificado',data:cadPct,yAxisID:'y1',borderColor:'#059669',backgroundColor:'transparent',tension:.3,pointRadius:cad.days.length>60?0:2,borderWidth:2,spanGaps:true,order:0,
+        datalabels:{display:ctx=>showLabels&&cad.days.length<=40,color:'#059669',font:{size:labelSize,weight:'bold'},anchor:'end',align:'top',offset:2,clip:false,formatter:v=>v!=null?v.toFixed(0)+'%':null}},
+      {label:'Verificado',data:cad.ver,backgroundColor:'rgba(5,150,105,.8)',borderRadius:3,stack:'s',order:1,datalabels:mbBarLabels('#fff')},
+      {label:'Não verificado',data:cad.nver,backgroundColor:'rgba(148,163,184,.55)',borderRadius:3,stack:'s',order:1,datalabels:mbBarLabels(DARK()?'#e2e8f0':'#334155')},
     ]},
-    options:{...bo(),plugins:{legend:{display:true,labels:{color:TXT(),font:bf,boxWidth:10}},datalabels:{display:false}},
-      scales:{x:{stacked:true,ticks:{color:TXT(),font:bf,maxTicksLimit:16},grid:{display:false}},y:{stacked:true,ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
+    options:{...bo(),plugins:{legend:{display:true,labels:{color:TXT(),font:bf,boxWidth:10}},datalabels:{display:false},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.dataset.yAxisID==='y1'?(c.raw!=null?c.raw.toFixed(1)+'%':'—'):fN(c.raw))}}},
+      scales:{x:{stacked:true,ticks:{color:TXT(),font:bf,maxTicksLimit:16},grid:{display:false}},
+        y:{stacked:true,ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0},
+        y1:{position:'right',min:0,max:100,ticks:{color:'#059669',font:bf,callback:v=>v+'%'},grid:{display:false}}}}
   });
 
-  // Cadastros por dia
-  const dd={};
-  rows.forEach(r=>{const k=r.dt.getTime();dd[k]=(dd[k]||0)+r.n;});
-  const dKeys=Object.keys(dd).map(Number).sort((a,b)=>a-b);
-  dc('chMbDaily');
-  CH['chMbDaily']=new Chart(document.getElementById('chMbDaily'),{type:'line',
-    data:{labels:dKeys.map(t=>dKey(new Date(t))),datasets:[
-      {label:'Cadastros',data:dKeys.map(t=>dd[t]),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,246,.10)',fill:true,tension:.3,pointRadius:dKeys.length>90?0:2,borderWidth:2,spanGaps:true,datalabels:{display:false}},
-    ]},
-    options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
-  });
+  // Funil
+  document.getElementById('mbFunnel').innerHTML=mbFunnelHtml(tot,totVer,totOnb,totPaid);
 
   // Donuts
   const agg=(key)=>{const o={};rows.forEach(r=>{o[key(r)]=(o[key(r)]||0)+r.n;});return Object.entries(o).sort((a,b)=>b[1]-a[1]);};
@@ -2127,39 +2441,50 @@ function renderMetabase(){
   const rest=srcAll.slice(7).reduce((a,e)=>a+e[1],0);
   mbDonut('chMbSrc','mbSrcLeg',rest>0?[...srcTop,['outras',rest]]:srcTop,tot);
 
-  // Planos pagos por mês (empilhado por família)
-  const pm={};
-  rows.filter(r=>MB_PAID_FAM.includes(r.fam)).forEach(r=>{const k=ymKey(r.dt);(pm[k]=pm[k]||{})[r.fam]=((pm[k]||{})[r.fam]||0)+r.n;});
-  const pKeys=Object.keys(pm).sort();
+  // Planos pagos (dia/semana/mês) — empilhado por família + linha % pagos/cadastros
+  const paidRows=rows.filter(r=>MB_PAID_FAM.includes(r.fam));
   const famCols={'Business':'#7c3aed','Enterprise':'#f59e0b','Pro':'#3b82f6'};
   dc('chMbPaid');
-  if(pKeys.length){
+  if(paidRows.length){
+    // Base: TODOS os cadastros (tot) p/ calcular a taxa; famílias pagas somadas por bucket
+    const paidDaily=mbDailySeries(rows,[...MB_PAID_FAM.map(f=>({k:f,val:r=>r.fam===f?r.n:0})),{k:'tot',val:r=>r.n}]);
+    const pd=aggDailyView(paidDaily,viewMbPaid,[...MB_PAID_FAM,'tot']);
+    const paidPct=pd.days.map((_,i)=>{const pg=MB_PAID_FAM.reduce((a,f)=>a+(pd[f][i]||0),0);return (pd.tot[i]||0)>0?r2(pg/pd.tot[i]*100):null;});
     CH['chMbPaid']=new Chart(document.getElementById('chMbPaid'),{type:'bar',
-      data:{labels:pKeys.map(ymLbl),datasets:MB_PAID_FAM.map(f=>({label:f,data:pKeys.map(k=>pm[k][f]||0),backgroundColor:famCols[f],borderRadius:3,stack:'p',datalabels:{display:false}}))},
-      options:{...bo(),plugins:{legend:{display:true,labels:{color:TXT(),font:bf,boxWidth:10}},datalabels:{display:false}},
-        scales:{x:{stacked:true,ticks:{color:TXT(),font:bf,maxTicksLimit:16},grid:{display:false}},y:{stacked:true,ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
+      data:{labels:pd.days,datasets:[
+        {type:'line',label:'% pagos / cadastros',data:paidPct,yAxisID:'y1',borderColor:'#059669',backgroundColor:'transparent',tension:.3,pointRadius:pd.days.length>60?0:2,borderWidth:2,spanGaps:true,order:0,
+          datalabels:{display:ctx=>showLabels&&pd.days.length<=40,color:'#059669',font:{size:labelSize,weight:'bold'},anchor:'end',align:'top',offset:2,clip:false,formatter:v=>v!=null?v.toFixed(1)+'%':null}},
+        ...MB_PAID_FAM.map(f=>({label:f,data:pd[f],backgroundColor:famCols[f],borderRadius:3,stack:'p',order:1,datalabels:mbBarLabels('#fff')}))
+      ]},
+      options:{...bo(),plugins:{legend:{display:true,labels:{color:TXT(),font:bf,boxWidth:10}},datalabels:{display:false},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.dataset.yAxisID==='y1'?(c.raw!=null?c.raw.toFixed(2)+'%':'—'):fN(c.raw))}}},
+        scales:{x:{stacked:true,ticks:{color:TXT(),font:bf,maxTicksLimit:16},grid:{display:false}},
+          y:{stacked:true,ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0},
+          y1:{position:'right',min:0,ticks:{color:'#059669',font:bf,callback:v=>v+'%'},grid:{display:false}}}}
     });
   } else {
     const w=document.getElementById('chMbPaidWrap');
     if(w)w.innerHTML='<div style="height:100%;min-height:160px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Sem planos pagos no período</div>';
   }
 
-  // Tabela por origem: cadastros, % verificado e planos por família
+  // Tabela por origem — clique abre drill-down das demais UTMs
   const bySrc={};
   rows.forEach(r=>{
     const o=bySrc[r.src]=bySrc[r.src]||{n:0,ver:0,Starter:0,Business:0,Enterprise:0,Pro:0,Onboarding:0,Outros:0};
     o.n+=r.n; if(r.ver)o.ver+=r.n; o[r.fam]+=r.n;
   });
   const srcRows=Object.entries(bySrc).sort((a,b)=>b[1].n-a[1].n);
+  mbSrcList=srcRows.map(([s])=>s);
   const th=(t,left)=>`<th class="${left?'':'num'}" style="font-size:9px;padding:6px 10px;${left?'text-align:left;':''}color:var(--muted);text-transform:uppercase">${t}</th>`;
-  document.getElementById('mbSrcTable').innerHTML=`<table style="min-width:760px;width:100%;border-collapse:collapse">
+  document.getElementById('mbSrcTable').innerHTML=`<table style="min-width:860px;width:100%;border-collapse:collapse">
     <thead><tr style="background:var(--surface2)">
-      ${th('Origem (utm_source)',1)}${th('Cadastros')}${th('Verificados')}${th('% Verif.')}${th('Pagos')}${th('Starter')}${th('Business')}${th('Enterprise')}${th('Pro')}${th('Outros')}
+      ${th('Origem (utm_source)',1)}${th('Cadastros')}${th('Verificados')}${th('% Verif.')}${th('Pagos')}${th('Starter')}${th('Business')}${th('Enterprise')}${th('Pro')}${th('Onboarding')}${th('Outros')}
     </tr></thead>
-    <tbody>${srcRows.map(([s,o])=>{
+    <tbody>${srcRows.map(([s,o],i)=>{
       const paid=o.Business+o.Enterprise+o.Pro;
-      return `<tr>
-        <td style="font-size:11px;padding:6px 10px;font-weight:600;max-width:220px;word-break:break-word;white-space:normal;line-height:1.4">${s}</td>
+      const sel=mbDrillSrc===s;
+      return `<tr onclick="mbDrill(mbSrcList[${i}])" style="cursor:pointer;${sel?'background:rgba(124,58,246,.10);':''}" title="Clique para ver medium / content / term desta origem">
+        <td style="font-size:11px;padding:6px 10px;font-weight:600;max-width:220px;word-break:break-word;white-space:normal;line-height:1.4">${sel?'▸ ':''}${s}</td>
         <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700">${fN(o.n)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(o.ver)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px">${pct(o.ver,o.n)}</td>
@@ -2168,7 +2493,8 @@ function renderMetabase(){
         <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Business)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Enterprise)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Pro)}</td>
-        <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(o.Onboarding+o.Outros)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;color:#f59e0b">${fN(o.Onboarding)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(o.Outros)}</td>
       </tr>`;}).join('')}</tbody>
     <tfoot><tr style="background:var(--surface2);font-weight:700">
       <td style="font-size:10px;padding:6px 10px;text-transform:uppercase;color:var(--muted2)">Total</td>
@@ -2176,9 +2502,60 @@ function renderMetabase(){
       <td class="num" style="font-size:11px;padding:6px 10px">${fN(totVer)}</td>
       <td class="num" style="font-size:11px;padding:6px 10px">${pct(totVer,tot)}</td>
       <td class="num" style="font-size:11px;padding:6px 10px;color:#7c3aed">${fN(totPaid)}</td>
-      <td class="num" colspan="5" style="font-size:10px;padding:6px 10px;color:var(--muted2);text-align:right">famílias somadas por origem</td>
+      <td class="num" colspan="6" style="font-size:10px;padding:6px 10px;color:var(--muted2);text-align:right">famílias somadas por origem</td>
     </tr></tfoot>
   </table>`;
+
+  // Drill-down aberto: re-renderiza respeitando o filtro atual
+  if(mbDrillSrc) mbDrillRender(rows);
+}
+
+// ── Drill-down: demais UTMs de uma origem ──
+function mbDrill(src){
+  mbDrillSrc=(mbDrillSrc===src)?null:src;
+  if(!mbDrillSrc){mbDrillClose();renderMetabase();return;}
+  renderMetabase();
+  const sec=document.getElementById('mbDrillSec');
+  if(sec){sec.style.display='';setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'nearest'}),80);}
+}
+function mbDrillClose(){
+  mbDrillSrc=null;
+  const sec=document.getElementById('mbDrillSec');
+  if(sec)sec.style.display='none';
+}
+function mbDrillRender(allRows){
+  const rows=allRows.filter(r=>r.src===mbDrillSrc);
+  const tot=rows.reduce((a,r)=>a+r.n,0);
+  document.getElementById('mbDrillTitle').textContent=`Demais UTMs — origem "${mbDrillSrc}" (${fN(tot)} cadastros no período)`;
+  const dims=[['utm_medium','med'],['utm_content','cont'],['utm_term','term']];
+  const pct=(a,b)=>b>0?(a/b*100).toFixed(1)+'%':'—';
+  document.getElementById('mbDrillTables').innerHTML=dims.map(([lbl,key])=>{
+    const o={};
+    rows.forEach(r=>{
+      const v=r[key]||'(sem utm)';
+      const e=o[v]=o[v]||{n:0,ver:0,paid:0};
+      e.n+=r.n; if(r.ver)e.ver+=r.n; if(MB_PAID_FAM.includes(r.fam))e.paid+=r.n;
+    });
+    const list=Object.entries(o).sort((a,b)=>b[1].n-a[1].n).slice(0,15);
+    return `<div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">${lbl}</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:var(--surface2)">
+          <th style="font-size:9px;padding:5px 8px;text-align:left;color:var(--muted);text-transform:uppercase">Valor</th>
+          <th class="num" style="font-size:9px;padding:5px 8px;color:var(--muted);text-transform:uppercase">Cad.</th>
+          <th class="num" style="font-size:9px;padding:5px 8px;color:var(--muted);text-transform:uppercase">% Verif.</th>
+          <th class="num" style="font-size:9px;padding:5px 8px;color:var(--muted);text-transform:uppercase">Pagos</th>
+        </tr></thead>
+        <tbody>${list.map(([v,e])=>`<tr>
+          <td style="font-size:10.5px;padding:5px 8px;max-width:180px;word-break:break-word;white-space:normal;line-height:1.4">${v}</td>
+          <td class="num" style="font-size:10.5px;padding:5px 8px;font-weight:700">${fN(e.n)}</td>
+          <td class="num" style="font-size:10.5px;padding:5px 8px">${pct(e.ver,e.n)}</td>
+          <td class="num" style="font-size:10.5px;padding:5px 8px;color:#7c3aed">${e.paid?fN(e.paid):'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+      ${Object.keys(o).length>15?`<div style="font-size:9px;color:var(--muted2);margin-top:4px">mostrando top 15 de ${Object.keys(o).length}</div>`:''}
+    </div>`;
+  }).join('');
 }
 
 // ═══ META HISTÓRICO ═══
