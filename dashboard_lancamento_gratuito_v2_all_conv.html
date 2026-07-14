@@ -276,6 +276,13 @@ details.desk-only{display:block!important;}
       </div>
       <a href="#" class="sb-item" id="sbSeo" onclick="goPage('seo',this);return false;"><span class="ico">📊</span>Visão Geral</a>
     </div>
+    <div class="sb-platform-group" style="margin-top:8px" id="sbMetabaseGroup">
+      <div class="sb-platform-hd">
+        <div class="sb-platform-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">M</div>
+        <span class="sb-platform-lbl">Metabase</span>
+      </div>
+      <a href="#" class="sb-item" id="sbMetabase" onclick="goPage('metabase',this);return false;"><span class="ico">🗄️</span>Assinantes</a>
+    </div>
     <a href="#" class="sb-item" id="sbPesquisa" style="display:none" onclick="goPage('pesquisa',this);return false;"><span class="ico">💬</span>Pesquisa</a>
   </div>
   <div class="sb-footer">
@@ -441,19 +448,88 @@ details.desk-only{display:block!important;}
           <div class="cw" style="height:180px" id="chSeoClkWrap"><canvas id="chSeoClk"></canvas></div>
         </div>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-left:3px solid #f59e0b;border-radius:var(--r);padding:9px 12px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:1.5">
+        <span style="font-size:13px">⚠️</span>
+        <span><strong style="color:var(--text)">Observação:</strong> as tabelas de <strong>palavras-chave, páginas e países</strong> abaixo são acumulados gerais do Search Console (todo o histórico) e <strong>não são filtradas</strong> pelo período de datas selecionado. Apenas os KPIs e os gráficos diários acima respondem ao filtro.</span>
+      </div>
       <div class="g2 mb14">
         <div class="section">
-          <div class="sec-hd">Top Palavras-chave</div>
+          <div class="sec-hd">Top Palavras-chave <span style="font-weight:400;font-size:9px;color:var(--muted2);text-transform:none;letter-spacing:0"> · acumulado geral</span></div>
           <div class="tc" id="seoKeywords"></div>
         </div>
         <div class="section">
-          <div class="sec-hd">Top Páginas</div>
+          <div class="sec-hd">Top Páginas <span style="font-weight:400;font-size:9px;color:var(--muted2);text-transform:none;letter-spacing:0"> · acumulado geral</span></div>
           <div class="tc" id="seoPages"></div>
         </div>
       </div>
       <div class="section">
-        <div class="sec-hd">Países</div>
+        <div class="sec-hd">Países <span style="font-weight:400;font-size:9px;color:var(--muted2);text-transform:none;letter-spacing:0"> · acumulado geral</span></div>
         <div class="tc" id="seoCountries"></div>
+      </div>
+    </div>
+
+    <!-- METABASE (assinantes) -->
+    <div class="page-section" id="page-metabase">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;box-shadow:var(--sh)">
+        <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Período (por data de cadastro)</span>
+        <div class="period-bar" id="mbPeriodBar" style="background:var(--surface2)">
+          <button class="pb" onclick="setMbPeriod(30,this)">30d</button>
+          <button class="pb" onclick="setMbPeriod(90,this)">90d</button>
+          <button class="pb" onclick="setMbPeriod(365,this)">12 meses</button>
+          <button class="pb active" onclick="setMbPeriod(0,this)">Tudo</button>
+        </div>
+        <div class="date-range">
+          <input type="date" id="mbDtI"><span>→</span><input type="date" id="mbDtF">
+          <button class="dr-clear" onclick="clearMbDates()">✕</button>
+        </div>
+        <span style="font-size:9px;color:var(--muted2)">Filtro exclusivo desta aba — usa <code>subscribed_at</code> (data de cadastro)</span>
+      </div>
+
+      <div class="krow k4 mb14" id="mbKpis"></div>
+
+      <div class="g2 mb14">
+        <div class="cc">
+          <div class="cc-t">Cadastros por Mês</div>
+          <div class="cc-s">Empilhado por verificação de e-mail</div>
+          <div class="cw" style="height:200px" id="chMbMonthWrap"><canvas id="chMbMonth"></canvas></div>
+        </div>
+        <div class="cc">
+          <div class="cc-t">Cadastros por Dia</div>
+          <div class="cc-s">Evolução diária de novos assinantes</div>
+          <div class="cw" style="height:200px" id="chMbDailyWrap"><canvas id="chMbDaily"></canvas></div>
+        </div>
+      </div>
+
+      <div class="g3 mb14" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="cc">
+          <div class="cc-t">E-mail Verificado</div>
+          <div class="cc-s">Sim vs. Não</div>
+          <div class="cw" style="height:170px"><canvas id="chMbVer"></canvas></div>
+          <div class="pz-leg" id="mbVerLeg"></div>
+        </div>
+        <div class="cc">
+          <div class="cc-t">Famílias de Plano</div>
+          <div class="cc-s">Distribuição dos cadastros</div>
+          <div class="cw" style="height:170px"><canvas id="chMbPlan"></canvas></div>
+          <div class="pz-leg" id="mbPlanLeg"></div>
+        </div>
+        <div class="cc">
+          <div class="cc-t">Origens (utm_source)</div>
+          <div class="cc-s">Top origens do período</div>
+          <div class="cw" style="height:170px"><canvas id="chMbSrc"></canvas></div>
+          <div class="pz-leg" id="mbSrcLeg"></div>
+        </div>
+      </div>
+
+      <div class="cc mb14">
+        <div class="cc-t">Planos Pagos por Mês</div>
+        <div class="cc-s">Business, Enterprise e Pro — empilhado por família</div>
+        <div class="cw" style="height:200px" id="chMbPaidWrap"><canvas id="chMbPaid"></canvas></div>
+      </div>
+
+      <div class="section">
+        <div class="sec-hd">Cadastros e Planos por Origem</div>
+        <div class="tc" id="mbSrcTable"></div>
       </div>
     </div>
 
@@ -551,6 +627,8 @@ const SEO_DAILY      = null;
 const SEO_KEYWORDS   = null;
 const SEO_PAGES      = null;
 const SEO_COUNTRIES  = null;
+// Metabase (assinantes)
+const METABASE_DATA  = null;
 
 // ═══ CONFIG ═══
 const LANCAMENTO_COD='RDC01';
@@ -1909,6 +1987,200 @@ function renderSeo(){
   }
 }
 
+// ═══ METABASE (assinantes) ═══
+// Filtro próprio, independente do global — baseado em subscribed_at
+let mbDays=0, mbDateI=null, mbDateF=null; // padrão: Tudo
+const MB_COLS=['#7c3aed','#a78bfa','#4c1d95','#c4b5fd','#5b21b6','#ddd6fe','#2e1065','#ede9fe'];
+
+function mbPlanFamily(p){
+  const s=(p||'').toLowerCase();
+  if(s.startsWith('starter'))    return 'Starter';
+  if(s.startsWith('business'))   return 'Business';
+  if(s.startsWith('enterprise')) return 'Enterprise';
+  if(s.startsWith('pro'))        return 'Pro';
+  if(s.startsWith('onboarding')) return 'Onboarding';
+  return 'Outros';
+}
+const MB_PAID_FAM=['Business','Enterprise','Pro'];
+
+// Decodifica METABASE_DATA {s:[origens],p:[planos],r:[[yymmdd,si,pi,ver,n],...]} uma única vez
+let _mbRows=null;
+function mbRows(){
+  if(_mbRows) return _mbRows;
+  if(!METABASE_DATA||!METABASE_DATA.r) return null;
+  const S=METABASE_DATA.s,P=METABASE_DATA.p;
+  _mbRows=METABASE_DATA.r.map(r=>{
+    const d=String(r[0]);
+    const dt=new Date(2000+parseInt(d.slice(0,2),10),parseInt(d.slice(2,4),10)-1,parseInt(d.slice(4,6),10));
+    return {dt,src:S[r[1]],plan:P[r[2]],fam:mbPlanFamily(P[r[2]]),ver:r[3]===1,n:r[4]};
+  });
+  return _mbRows;
+}
+
+function mbFiltered(){
+  const rows=mbRows(); if(!rows) return null;
+  let ini=null,fim=null;
+  if(mbDays>0){
+    fim=getHoje(); fim.setHours(23,59,59,999);
+    ini=new Date(fim); ini.setDate(ini.getDate()-(mbDays-1)); ini.setHours(0,0,0,0);
+  }
+  if(mbDateI) ini=mbDateI;
+  if(mbDateF) fim=mbDateF;
+  if(!ini&&!fim) return rows;
+  return rows.filter(r=>(!ini||r.dt>=ini)&&(!fim||r.dt<=fim));
+}
+
+function setMbPeriod(days,btn){
+  mbDays=days; mbDateI=null; mbDateF=null;
+  const i=document.getElementById('mbDtI'),f=document.getElementById('mbDtF');
+  if(i)i.value=''; if(f)f.value='';
+  document.querySelectorAll('#mbPeriodBar .pb').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderMetabase();
+}
+function clearMbDates(){setMbPeriod(0,document.querySelector('#mbPeriodBar .pb:last-child'));}
+
+function mbDonut(id,legId,entries,total){
+  if(PC[id]){PC[id].destroy();delete PC[id];}
+  const el=document.getElementById(id); if(!el) return;
+  PC[id]=new Chart(el,{type:'doughnut',
+    data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:MB_COLS.slice(0,entries.length),borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{
+      legend:{display:false},
+      datalabels:{display:true,color:'#fff',font:{size:9,weight:'bold'},
+        formatter:(v,ctx)=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return t>0&&v/t>0.05?(v/t*100).toFixed(0)+'%':null;}}
+    }}
+  });
+  const leg=document.getElementById(legId);
+  if(leg) leg.innerHTML=entries.slice(0,6).map((e,j)=>`
+    <div class="pl"><div class="pl-dot" style="background:${MB_COLS[j]}"></div>
+      <div class="pl-lbl" title="${e[0]}">${e[0]}</div>
+      <div class="pl-pct">${total>0?(e[1]/total*100).toFixed(1)+'%':e[1]} · ${fN(e[1])}</div>
+    </div>`).join('');
+}
+
+function renderMetabase(){
+  const rows=mbFiltered(); if(!rows) return;
+  const tot=rows.reduce((a,r)=>a+r.n,0);
+  const totVer=rows.filter(r=>r.ver).reduce((a,r)=>a+r.n,0);
+  const totPaid=rows.filter(r=>MB_PAID_FAM.includes(r.fam)).reduce((a,r)=>a+r.n,0);
+  const totUtm=rows.filter(r=>r.src!=='(sem utm)').reduce((a,r)=>a+r.n,0);
+  const pct=(a,b)=>b>0?(a/b*100).toFixed(1)+'%':'—';
+
+  // KPIs
+  document.getElementById('mbKpis').innerHTML=`
+    <div class="kpi" style="--kc:#7c3aed"><div class="kpi-lbl">Total de Cadastros</div><div class="kpi-val" style="color:var(--text)">${fN(tot)}</div><div class="kpi-sub">assinantes no período</div></div>
+    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">E-mail Verificado</div><div class="kpi-val" style="color:var(--text)">${pct(totVer,tot)}</div><div class="kpi-sub">${fN(totVer)} verificados</div></div>
+    <div class="kpi" style="--kc:#f59e0b"><div class="kpi-lbl">Planos Pagos</div><div class="kpi-val" style="color:var(--text)">${fN(totPaid)}</div><div class="kpi-sub">${pct(totPaid,tot)} do total (Business/Enterprise/Pro)</div></div>
+    <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Com UTM</div><div class="kpi-val" style="color:var(--text)">${pct(totUtm,tot)}</div><div class="kpi-sub">${fN(totUtm)} cadastros rastreados</div></div>`;
+
+  if(!tot){
+    ['chMbMonth','chMbDaily','chMbPaid'].forEach(id=>{dc(id);
+      const w=document.getElementById(id+'Wrap');
+      if(w)w.innerHTML='<div style="height:100%;min-height:160px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Sem cadastros no período selecionado</div>';});
+    ['chMbVer','chMbPlan','chMbSrc'].forEach(id=>{if(PC[id]){PC[id].destroy();delete PC[id];}});
+    ['mbVerLeg','mbPlanLeg','mbSrcLeg'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='';});
+    document.getElementById('mbSrcTable').innerHTML='<div style="padding:14px;color:var(--muted);font-size:12px">Sem dados no período.</div>';
+    return;
+  }
+  // Restaura canvases se necessário
+  ['chMbMonth','chMbDaily','chMbPaid'].forEach(id=>{
+    if(!document.getElementById(id)){const w=document.getElementById(id+'Wrap');if(w)w.innerHTML='<canvas id="'+id+'"></canvas>';}
+  });
+
+  const ymKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const ymLbl=k=>{const[y,m]=k.split('-');return m+'/'+y.slice(2);};
+  const dKey=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2);
+
+  // Cadastros por mês, empilhado por verificado
+  const mm={};
+  rows.forEach(r=>{const k=ymKey(r.dt);(mm[k]=mm[k]||{v:0,nv:0})[r.ver?'v':'nv']+=r.n;});
+  const mKeys=Object.keys(mm).sort();
+  dc('chMbMonth');
+  CH['chMbMonth']=new Chart(document.getElementById('chMbMonth'),{type:'bar',
+    data:{labels:mKeys.map(ymLbl),datasets:[
+      {label:'Verificado',data:mKeys.map(k=>mm[k].v),backgroundColor:'rgba(5,150,105,.8)',borderRadius:3,stack:'s',datalabels:{display:false}},
+      {label:'Não verificado',data:mKeys.map(k=>mm[k].nv),backgroundColor:'rgba(148,163,184,.55)',borderRadius:3,stack:'s',datalabels:{display:false}},
+    ]},
+    options:{...bo(),plugins:{legend:{display:true,labels:{color:TXT(),font:bf,boxWidth:10}},datalabels:{display:false}},
+      scales:{x:{stacked:true,ticks:{color:TXT(),font:bf,maxTicksLimit:16},grid:{display:false}},y:{stacked:true,ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
+  });
+
+  // Cadastros por dia
+  const dd={};
+  rows.forEach(r=>{const k=r.dt.getTime();dd[k]=(dd[k]||0)+r.n;});
+  const dKeys=Object.keys(dd).map(Number).sort((a,b)=>a-b);
+  dc('chMbDaily');
+  CH['chMbDaily']=new Chart(document.getElementById('chMbDaily'),{type:'line',
+    data:{labels:dKeys.map(t=>dKey(new Date(t))),datasets:[
+      {label:'Cadastros',data:dKeys.map(t=>dd[t]),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,246,.10)',fill:true,tension:.3,pointRadius:dKeys.length>90?0:2,borderWidth:2,spanGaps:true,datalabels:{display:false}},
+    ]},
+    options:{...bo(),scales:{x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},y:{ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
+  });
+
+  // Donuts
+  const agg=(key)=>{const o={};rows.forEach(r=>{o[key(r)]=(o[key(r)]||0)+r.n;});return Object.entries(o).sort((a,b)=>b[1]-a[1]);};
+  mbDonut('chMbVer','mbVerLeg',agg(r=>r.ver?'Sim':'Não'),tot);
+  mbDonut('chMbPlan','mbPlanLeg',agg(r=>r.fam),tot);
+  const srcAll=agg(r=>r.src);
+  const srcTop=srcAll.slice(0,7);
+  const rest=srcAll.slice(7).reduce((a,e)=>a+e[1],0);
+  mbDonut('chMbSrc','mbSrcLeg',rest>0?[...srcTop,['outras',rest]]:srcTop,tot);
+
+  // Planos pagos por mês (empilhado por família)
+  const pm={};
+  rows.filter(r=>MB_PAID_FAM.includes(r.fam)).forEach(r=>{const k=ymKey(r.dt);(pm[k]=pm[k]||{})[r.fam]=((pm[k]||{})[r.fam]||0)+r.n;});
+  const pKeys=Object.keys(pm).sort();
+  const famCols={'Business':'#7c3aed','Enterprise':'#f59e0b','Pro':'#3b82f6'};
+  dc('chMbPaid');
+  if(pKeys.length){
+    CH['chMbPaid']=new Chart(document.getElementById('chMbPaid'),{type:'bar',
+      data:{labels:pKeys.map(ymLbl),datasets:MB_PAID_FAM.map(f=>({label:f,data:pKeys.map(k=>pm[k][f]||0),backgroundColor:famCols[f],borderRadius:3,stack:'p',datalabels:{display:false}}))},
+      options:{...bo(),plugins:{legend:{display:true,labels:{color:TXT(),font:bf,boxWidth:10}},datalabels:{display:false}},
+        scales:{x:{stacked:true,ticks:{color:TXT(),font:bf,maxTicksLimit:16},grid:{display:false}},y:{stacked:true,ticks:{color:TXT(),font:bf},grid:{color:GRID()},min:0}}}
+    });
+  } else {
+    const w=document.getElementById('chMbPaidWrap');
+    if(w)w.innerHTML='<div style="height:100%;min-height:160px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Sem planos pagos no período</div>';
+  }
+
+  // Tabela por origem: cadastros, % verificado e planos por família
+  const bySrc={};
+  rows.forEach(r=>{
+    const o=bySrc[r.src]=bySrc[r.src]||{n:0,ver:0,Starter:0,Business:0,Enterprise:0,Pro:0,Onboarding:0,Outros:0};
+    o.n+=r.n; if(r.ver)o.ver+=r.n; o[r.fam]+=r.n;
+  });
+  const srcRows=Object.entries(bySrc).sort((a,b)=>b[1].n-a[1].n);
+  const th=(t,left)=>`<th class="${left?'':'num'}" style="font-size:9px;padding:6px 10px;${left?'text-align:left;':''}color:var(--muted);text-transform:uppercase">${t}</th>`;
+  document.getElementById('mbSrcTable').innerHTML=`<table style="min-width:760px;width:100%;border-collapse:collapse">
+    <thead><tr style="background:var(--surface2)">
+      ${th('Origem (utm_source)',1)}${th('Cadastros')}${th('Verificados')}${th('% Verif.')}${th('Pagos')}${th('Starter')}${th('Business')}${th('Enterprise')}${th('Pro')}${th('Outros')}
+    </tr></thead>
+    <tbody>${srcRows.map(([s,o])=>{
+      const paid=o.Business+o.Enterprise+o.Pro;
+      return `<tr>
+        <td style="font-size:11px;padding:6px 10px;font-weight:600;max-width:220px;word-break:break-word;white-space:normal;line-height:1.4">${s}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700">${fN(o.n)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(o.ver)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px">${pct(o.ver,o.n)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700;color:#7c3aed">${fN(paid)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(o.Starter)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Business)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Enterprise)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Pro)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(o.Onboarding+o.Outros)}</td>
+      </tr>`;}).join('')}</tbody>
+    <tfoot><tr style="background:var(--surface2);font-weight:700">
+      <td style="font-size:10px;padding:6px 10px;text-transform:uppercase;color:var(--muted2)">Total</td>
+      <td class="num" style="font-size:11px;padding:6px 10px">${fN(tot)}</td>
+      <td class="num" style="font-size:11px;padding:6px 10px">${fN(totVer)}</td>
+      <td class="num" style="font-size:11px;padding:6px 10px">${pct(totVer,tot)}</td>
+      <td class="num" style="font-size:11px;padding:6px 10px;color:#7c3aed">${fN(totPaid)}</td>
+      <td class="num" colspan="5" style="font-size:10px;padding:6px 10px;color:var(--muted2);text-align:right">famílias somadas por origem</td>
+    </tr></tfoot>
+  </table>`;
+}
+
 // ═══ META HISTÓRICO ═══
 function renderMetaHist(){
   if(!META_MONTHLY) return;
@@ -2106,7 +2378,7 @@ function renderGoogleHist(){
 function setPeriod(days,btn){
   periodDays=days; dateI=null; dateF=null;
   document.getElementById('dtI').value=''; document.getElementById('dtF').value='';
-  document.querySelectorAll('.period-bar .pb').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.period-bar:not(#mbPeriodBar) .pb').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   // Resetar cache do filtro de campanhas para reconstruir com novas campanhas do período
   const mf=document.getElementById('metaCampFilter');
@@ -2123,14 +2395,27 @@ document.getElementById('dtI').addEventListener('change',e=>{
     if(dtFel){dtFel.min=e.target.value; if(!dtFel.value) dtFel.focus();}
   } else dateI=null;
   periodDays=0;
-  document.querySelectorAll('.period-bar .pb').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.period-bar:not(#mbPeriodBar) .pb').forEach(b=>b.classList.remove('active'));
   rerenderActive();
 });
 document.getElementById('dtF').addEventListener('change',e=>{
   if(e.target.value){const[y,m,d]=e.target.value.split('-').map(Number);dateF=new Date(y,m-1,d,23,59,59);}else dateF=null;
   periodDays=0;
-  document.querySelectorAll('.period-bar .pb').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.period-bar:not(#mbPeriodBar) .pb').forEach(b=>b.classList.remove('active'));
   rerenderActive();
+});
+// Datas do filtro próprio do Metabase
+document.getElementById('mbDtI')?.addEventListener('change',e=>{
+  if(e.target.value){const[y,m,d]=e.target.value.split('-').map(Number);mbDateI=new Date(y,m-1,d,0,0,0);}else mbDateI=null;
+  mbDays=0;
+  document.querySelectorAll('#mbPeriodBar .pb').forEach(b=>b.classList.remove('active'));
+  renderMetabase();
+});
+document.getElementById('mbDtF')?.addEventListener('change',e=>{
+  if(e.target.value){const[y,m,d]=e.target.value.split('-').map(Number);mbDateF=new Date(y,m-1,d,23,59,59);}else mbDateF=null;
+  mbDays=0;
+  document.querySelectorAll('#mbPeriodBar .pb').forEach(b=>b.classList.remove('active'));
+  renderMetabase();
 });
 function clearDates(){
   dateI=null; dateF=null;
@@ -2156,6 +2441,7 @@ function rerenderActive(){
   if(p==='google')      renderGoogle();
   if(p==='google-hist') renderGoogleHist();
   if(p==='seo')         renderSeo();
+  if(p==='metabase')    renderMetabase();
   if(p==='pesquisa')    renderPesquisa();
   setTimeout(()=>{Object.values({...CH,...PC}).forEach(c=>{try{c.resize();}catch(e){}});},60);
 }
@@ -2166,14 +2452,21 @@ function goPage(p,btn){
   document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
   document.getElementById('page-'+p)?.classList.add('active');
   if(btn) btn.classList.add('active');
-  const titles={'meta':'Meta Ads — Geral','diario':'Métricas Diárias','meta-hist':'Meta Ads — Histórico','google':'Google Ads','google-hist':'Google Ads — Histórico','seo':'SEO','pesquisa':'Pesquisa'};
+  const titles={'meta':'Meta Ads — Geral','diario':'Métricas Diárias','meta-hist':'Meta Ads — Histórico','google':'Google Ads','google-hist':'Google Ads — Histórico','seo':'SEO','metabase':'Metabase — Assinantes','pesquisa':'Pesquisa'};
   document.getElementById('pageTitle').textContent=titles[p]||p;
+  // Metabase tem filtro de datas próprio — esconde o filtro global do topo p/ não duplicar
+  const _gPb=document.querySelector('.topbar-r .period-bar');
+  const _gDr=document.querySelector('.topbar-r .date-range');
+  const _showG=(p!=='metabase');
+  if(_gPb)_gPb.style.display=_showG?'':'none';
+  if(_gDr)_gDr.style.display=_showG?'':'none';
   if(p==='meta')        renderMeta();
   if(p==='diario')      renderDiario();
   if(p==='meta-hist')   renderMetaHist();
   if(p==='google')      renderGoogle();
   if(p==='google-hist') renderGoogleHist();
   if(p==='seo')         renderSeo();
+  if(p==='metabase')    renderMetabase();
   if(p==='pesquisa')    renderPesquisa();
   setTimeout(()=>{Object.values({...CH,...PC}).forEach(c=>{try{c.resize();}catch(e){}});},80);
   if(window.innerWidth<=768) closeSb();
@@ -2235,6 +2528,13 @@ window.addEventListener('resize', ajustarPaddingContent);
   } else {
     if(sbP) sbP.style.display='none';
     if(pgP) pgP.style.display='none';
+  }
+  // Metabase: mostrar só se dados injetados
+  const sbMbG=document.getElementById('sbMetabaseGroup');
+  const pgMb=document.getElementById('page-metabase');
+  if(!(METABASE_DATA&&METABASE_DATA.r&&METABASE_DATA.r.length)){
+    if(sbMbG) sbMbG.style.display='none';
+    if(pgMb) pgMb.style.display='none';
   }
   renderMeta();
   ajustarPaddingContent();
