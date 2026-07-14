@@ -569,7 +569,11 @@ def _mb_norm_src(s):
 def load_metabase():
     print("  Lendo Metabase (assinantes)...")
     df = pd.read_csv(URL_METABASE)
-    dt = pd.to_datetime(df["subscribed_at"], errors="coerce", utc=True)
+    # Data de cadastro = created_at (subscribed_at é atualizado depois, na confirmação/assinatura,
+    # o que inflava os verificados ao filtrar por dia). Fallback p/ subscribed_at se faltar.
+    dt = pd.to_datetime(df["created_at"], errors="coerce", utc=True) if "created_at" in df.columns else pd.Series(pd.NaT, index=df.index)
+    if "subscribed_at" in df.columns:
+        dt = dt.fillna(pd.to_datetime(df["subscribed_at"], errors="coerce", utc=True))
     df = df[dt.notna()].copy()
     df["d"] = dt[dt.notna()].dt.strftime("%y%m%d")
     df["src"] = df["utm_source"].apply(_mb_norm_src)
