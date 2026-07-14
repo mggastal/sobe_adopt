@@ -552,20 +552,19 @@ def load_seo():
 URL_METABASE = sheet_url("metabase-export")
 
 def _mb_norm_src(s):
-    """Normaliza utm_source: vazio→(sem utm), cookie_banner_*→cookie_banner,
+    """Normaliza valores de UTM: vazio→(sem utm), cookie_banner_*→cookie_banner,
     arrays {a,b}→último item, tudo minúsculo p/ unificar variações."""
-    import re as _re
     if pd.isna(s) or str(s).strip() == "":
         return "(sem utm)"
     s = str(s).strip()
-    if s.lower().startswith("cookie_banner"):
+    if s.lower().startswith("cookie_banner") and len(s) > len("cookie_banner"):
         return "cookie_banner"
     if s.startswith("{"):
         parts = [p.strip().strip('"').strip() for p in s.strip("{}").split(",")]
         parts = [p for p in parts if p]
         if parts:
             s = parts[-1]
-    return s.lower()
+    return s.lower()[:60]
 
 def load_metabase():
     print("  Lendo Metabase (assinantes)...")
@@ -574,17 +573,19 @@ def load_metabase():
     df = df[dt.notna()].copy()
     df["d"] = dt[dt.notna()].dt.strftime("%y%m%d")
     df["src"] = df["utm_source"].apply(_mb_norm_src)
+    for col, key in (("utm_medium", "med"), ("utm_content", "cont"), ("utm_term", "term")):
+        df[key] = df[col].apply(_mb_norm_src) if col in df.columns else "(sem utm)"
     df["plan"] = df["current_plan"].fillna("(sem plano)").astype(str).str.strip()
     ev = df["email_verified"]
     df["ver"] = ev.map(lambda v: 1 if (v is True or str(v).strip().lower() in ("true", "1", "sim", "yes", "verdadeiro")) else 0)
-    g = df.groupby(["d", "src", "plan", "ver"]).size().reset_index(name="n")
-    sources = sorted(df["src"].unique().tolist())
-    plans = sorted(df["plan"].unique().tolist())
-    si = {s: i for i, s in enumerate(sources)}
-    pi = {p: i for i, p in enumerate(plans)}
-    rows = [[r["d"], si[r["src"]], pi[r["plan"]], int(r["ver"]), int(r["n"])] for _, r in g.iterrows()]
-    print(f"     Assinantes: {int(g['n'].sum())} | combos: {len(rows)} | origens: {len(sources)} | planos: {len(plans)}")
-    return {"s": sources, "p": plans, "r": rows}
+    g = df.groupby(["d", "src", "med", "cont", "term", "plan", "ver"]).size().reset_index(name="n")
+    dims = {out: sorted(df[key].unique().tolist())
+            for key, out in (("src","s"),("plan","p"),("med","m"),("cont","c"),("term","t"))}
+    idx = {out: {v: i for i, v in enumerate(vals)} for out, vals in dims.items()}
+    rows = [[r["d"], idx["s"][r["src"]], idx["p"][r["plan"]], int(r["ver"]), int(r["n"]),
+             idx["m"][r["med"]], idx["c"][r["cont"]], idx["t"][r["term"]]] for _, r in g.iterrows()]
+    print(f"     Assinantes: {int(g['n'].sum())} | combos: {len(rows)} | origens: {len(dims['s'])} | planos: {len(dims['p'])} | med/cont/term: {len(dims['m'])}/{len(dims['c'])}/{len(dims['t'])}")
+    return {**dims, "r": rows}
 
 def meta_monthly(df):
     PT_MONTHS={"Jan":"Jan","Feb":"Fev","Mar":"Mar","Apr":"Abr","May":"Mai",
