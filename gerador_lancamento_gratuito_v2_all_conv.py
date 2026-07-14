@@ -548,6 +548,44 @@ def load_seo():
     print(f"     Países: {len(countries)}")
     return daily, keywords, pages, countries
 
+# ══ METABASE (assinantes) ═══════════════════════════════
+URL_METABASE = sheet_url("metabase-export")
+
+def _mb_norm_src(s):
+    """Normaliza utm_source: vazio→(sem utm), cookie_banner_*→cookie_banner,
+    arrays {a,b}→último item, tudo minúsculo p/ unificar variações."""
+    import re as _re
+    if pd.isna(s) or str(s).strip() == "":
+        return "(sem utm)"
+    s = str(s).strip()
+    if s.lower().startswith("cookie_banner"):
+        return "cookie_banner"
+    if s.startswith("{"):
+        parts = [p.strip().strip('"').strip() for p in s.strip("{}").split(",")]
+        parts = [p for p in parts if p]
+        if parts:
+            s = parts[-1]
+    return s.lower()
+
+def load_metabase():
+    print("  Lendo Metabase (assinantes)...")
+    df = pd.read_csv(URL_METABASE)
+    dt = pd.to_datetime(df["subscribed_at"], errors="coerce", utc=True)
+    df = df[dt.notna()].copy()
+    df["d"] = dt[dt.notna()].dt.strftime("%y%m%d")
+    df["src"] = df["utm_source"].apply(_mb_norm_src)
+    df["plan"] = df["current_plan"].fillna("(sem plano)").astype(str).str.strip()
+    ev = df["email_verified"]
+    df["ver"] = ev.map(lambda v: 1 if (v is True or str(v).strip().lower() in ("true", "1", "sim", "yes", "verdadeiro")) else 0)
+    g = df.groupby(["d", "src", "plan", "ver"]).size().reset_index(name="n")
+    sources = sorted(df["src"].unique().tolist())
+    plans = sorted(df["plan"].unique().tolist())
+    si = {s: i for i, s in enumerate(sources)}
+    pi = {p: i for i, p in enumerate(plans)}
+    rows = [[r["d"], si[r["src"]], pi[r["plan"]], int(r["ver"]), int(r["n"])] for _, r in g.iterrows()]
+    print(f"     Assinantes: {int(g['n'].sum())} | combos: {len(rows)} | origens: {len(sources)} | planos: {len(plans)}")
+    return {"s": sources, "p": plans, "r": rows}
+
 def meta_monthly(df):
     PT_MONTHS={"Jan":"Jan","Feb":"Fev","Mar":"Mar","Apr":"Abr","May":"Mai",
                 "Jun":"Jun","Jul":"Jul","Aug":"Ago","Sep":"Set","Oct":"Out","Nov":"Nov","Dec":"Dez"}
@@ -660,7 +698,7 @@ def replace_js_const(html, name, value):
 
 def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, meta_month, pes,
                g_daily, g_kpis, g_camps, g_kw, g_bd, g_month, g_raw,
-               seo_daily, seo_kw, seo_pages, seo_countries):
+               seo_daily, seo_kw, seo_pages, seo_countries, mb_data):
     html=Path(tpl).read_text(encoding="utf-8")
     # Meta
     html=replace_js_const(html,"META_KPIS",     meta_k)
@@ -685,6 +723,8 @@ def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, meta_m
     html=replace_js_const(html,"SEO_KEYWORDS",  seo_kw)
     html=replace_js_const(html,"SEO_PAGES",     seo_pages)
     html=replace_js_const(html,"SEO_COUNTRIES", seo_countries)
+    # Metabase (assinantes)
+    html=replace_js_const(html,"METABASE_DATA", mb_data if mb_data else False)
     _cpl_bom   = globals().get("CPL_BOM",   globals().get("CPA_BOM",   5.0))
     _cpl_medio = globals().get("CPL_MEDIO", globals().get("CPA_MEDIO", 10.0))
     for k,v in [("LANCAMENTO_COD",f"'{LANCAMENTO_COD}'"),("NOME_CLIENTE",f"'{NOME_CLIENTE}'"),
@@ -744,6 +784,13 @@ def main():
         seo_daily={"days":[],"impressions":[],"clicks":[]}
         seo_kw=[]; seo_pages=[]; seo_countries=[]
 
+    print("\n[METABASE]")
+    try:
+        mb_data=load_metabase()
+    except Exception as e:
+        print(f"  Aviso Metabase: {e}")
+        mb_data=None
+
     print("\n[PESQUISA]")
     if USAR_PESQUISA:
         df_pes=load_pesquisa()
@@ -758,9 +805,9 @@ def main():
         print(f"  ERRO: {TEMPLATE_FILE} não encontrado"); return
     html=inject_all(TEMPLATE_FILE,m_k,m_d,m_dc,m_raw,m_t,m_bd,m_month,pes,
                     g_daily,g_kpis,g_camps,g_kw,g_bd,g_month,g_raw,
-                    seo_daily,seo_kw,seo_pages,seo_countries)
+                    seo_daily,seo_kw,seo_pages,seo_countries,mb_data)
     # Diagnóstico — verificar se constantes foram injetadas
-    checks = ["GOOGLE_DAILY","GOOGLE_KPIS","GOOGLE_CAMPS","SEO_DAILY","META_MONTHLY"]
+    checks = ["GOOGLE_DAILY","GOOGLE_KPIS","GOOGLE_CAMPS","SEO_DAILY","META_MONTHLY","METABASE_DATA"]
     for c in checks:
         idx = html.find(f"const {c} =")
         snippet = html[idx+len(f"const {c} ="):idx+len(f"const {c} =")+30] if idx>=0 else "NÃO ENCONTRADO"
