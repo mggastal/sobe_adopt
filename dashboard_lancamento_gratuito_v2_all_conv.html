@@ -1924,7 +1924,7 @@ function renderGoogle(){
   // KPIs
   document.getElementById('gKpis').innerHTML=`
     <div class="kpi" style="--kc:#334155"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="font-size:16px;color:var(--text)">${fD(gk.spend)}</div><div class="kpi-sub">${deltaBadge(gk.spend,pg?.spend,'neutro')||'Google Ads'}</div></div>
-    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Conversões</div><div class="kpi-val" style="color:var(--text)">${fConv(gk.conversions)}</div><div class="kpi-sub">${deltaBadge(gk.conversions,pg?.conversions)||'All Conversions'}</div></div>
+    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Conversões</div><div class="kpi-val" style="color:var(--text)">${fConv(gk.conversions)}</div><div class="kpi-sub">${deltaBadge(gk.conversions,pg?.conversions)||'Conversions'}</div></div>
     <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--text)">${fN(gk.clicks)}</div><div class="kpi-sub">${deltaBadge(gk.clicks,pg?.clicks)||('CTR: '+fP(gk.ctr))}</div></div>
     <div class="kpi" style="--kc:${cpaCls(gk.cpa)==='cg'?'#059669':cpaCls(gk.cpa)==='cw2'?'#d97706':'#dc2626'}"><div class="kpi-lbl">CPA</div><div class="kpi-val ${cpaCls(gk.cpa)}">${fD(gk.cpa)}</div><div class="kpi-sub">${deltaBadge(gk.cpa,pg?.cpa,true)||('CPC: '+fD(gk.cpc))}</div></div>`;
 
