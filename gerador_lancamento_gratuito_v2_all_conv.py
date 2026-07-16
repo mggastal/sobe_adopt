@@ -334,9 +334,13 @@ AGE_MAP = {"AGE_RANGE_18_24":"18-24","AGE_RANGE_25_34":"25-34","AGE_RANGE_35_44"
 def load_google():
     print("  Lendo google-ads...")
     df=pd.read_csv(URL_GOOGLE)
+    # Métrica de conversão: "Conversions" (conversões principais) em vez de "All Conversions";
+    # fallback p/ planilhas antigas que só tenham a coluna All.
+    _conv_col=lambda d:"Conversions" if "Conversions" in d.columns else "All Conversions"
     df["date"]=pd.to_datetime(df["Date (Segment)"],errors="coerce")
     df["spend"]=to_num(df["Cost (Spend, Amount Spent)"])
-    df["conversions"]=to_num(df["All Conversions"])
+    df["conversions"]=to_num(df[_conv_col(df)])
+    print(f"     Coluna de conversão: {_conv_col(df)}")
     df["clicks"]=to_num(df["Clicks"])
     df["impressions"]=to_num(df["Impressions"])
     df["campaign"]=df["Campaign Name"]
@@ -471,7 +475,7 @@ def google_breakdowns(df):
         df_a=pd.read_csv(URL_GOOGLE_AG)
         df_a["date"]=pd.to_datetime(df_a["Date (Segment)"],errors="coerce")
         df_a["spend"]=to_num(df_a["Cost (Spend, Amount Spent)"])
-        df_a["conv"]=to_num(df_a["All Conversions"])
+        df_a["conv"]=to_num(df_a["Conversions"] if "Conversions" in df_a.columns else df_a["All Conversions"])
         df_a["clicks"]=to_num(df_a["Clicks"])
         df_a["age"]=df_a["Age (Ad Group Criterion)"].map(AGE_MAP).fillna(df_a["Age (Ad Group Criterion)"].astype(str))
         df_a=df_a.dropna(subset=["date"])
@@ -480,7 +484,7 @@ def google_breakdowns(df):
         df_g=pd.read_csv(URL_GOOGLE_GE)
         df_g["date"]=pd.to_datetime(df_g["Date (Segment)"],errors="coerce")
         df_g["spend"]=to_num(df_g["Cost (Spend, Amount Spent)"])
-        df_g["conv"]=to_num(df_g["All Conversions"])
+        df_g["conv"]=to_num(df_g["Conversions"] if "Conversions" in df_g.columns else df_g["All Conversions"])
         df_g["gender"]=df_g["Gender (Ad Group Criterion)"].str.lower()
         df_g=df_g.dropna(subset=["date"])
     except Exception as e: print(f"  Aviso Gender: {e}"); df_g=pd.DataFrame()
