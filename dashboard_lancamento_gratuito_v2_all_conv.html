@@ -111,6 +111,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;}
 .g73{display:grid;grid-template-columns:7fr 3fr;gap:12px;margin-bottom:14px;}
 .g31{display:grid;grid-template-columns:3fr 1fr;gap:12px;margin-bottom:14px;}
+.g2>*,.g3>*,.g31>*,.g73>*{min-width:0;}
 .mb14{margin-bottom:14px;}
 
 /* MÉTRICAS DIÁRIAS */
@@ -280,7 +281,7 @@ details.desk-only{display:block!important;}
         <span class="sb-platform-lbl">Meta Ads</span>
       </div>
       <a href="#" class="sb-item active" id="sbMeta" onclick="goPage('meta',this);return false;"><span class="ico">📋</span>Geral</a>
-      <a href="#" class="sb-item" id="sbDiario" onclick="goPage('diario',this);return false;"><span class="ico">📊</span>Métricas Diárias<span class="sb-dot" style="background:#1877f2"></span></a>
+      <a href="#" class="sb-item" id="sbDiario" onclick="goPage('diario',this);return false;"><span class="ico">📊</span>Métricas Diárias</a>
       <a href="#" class="sb-item" id="sbMetaHist" onclick="goPage('meta-hist',this);return false;"><span class="ico">📅</span>Dados Históricos</a>
     </div>
     <div class="sb-platform-group" style="margin-top:8px">
@@ -289,7 +290,15 @@ details.desk-only{display:block!important;}
         <span class="sb-platform-lbl">Google Ads</span>
       </div>
       <a href="#" class="sb-item" id="sbGoogle" onclick="goPage('google',this);return false;"><span class="ico">📋</span>Geral</a>
+      <a href="#" class="sb-item" id="sbGoogleDiario" onclick="goPage('google-diario',this);return false;"><span class="ico">📈</span>Métricas Diárias</a>
       <a href="#" class="sb-item" id="sbGoogleHist" onclick="goPage('google-hist',this);return false;"><span class="ico">📅</span>Dados Históricos</a>
+    </div>
+    <div class="sb-platform-group" style="margin-top:8px" id="sbLinkedinGroup">
+      <div class="sb-platform-hd">
+        <div class="sb-platform-icon" style="background:linear-gradient(135deg,#0a66c2,#4a9fe8)">in</div>
+        <span class="sb-platform-lbl">LinkedIn Ads</span>
+      </div>
+      <a href="#" class="sb-item" id="sbLinkedin" onclick="goPage('linkedin',this);return false;"><span class="ico">📣</span>Visão Geral</a>
     </div>
     <div class="sb-platform-group" style="margin-top:8px">
       <div class="sb-platform-hd">
@@ -298,12 +307,19 @@ details.desk-only{display:block!important;}
       </div>
       <a href="#" class="sb-item" id="sbSeo" onclick="goPage('seo',this);return false;"><span class="ico">📊</span>Visão Geral</a>
     </div>
-    <div class="sb-platform-group" style="margin-top:8px" id="sbMetabaseGroup">
+        <div class="sb-platform-group" style="margin-top:8px" id="sbMetabaseGroup">
       <div class="sb-platform-hd">
         <div class="sb-platform-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">M</div>
         <span class="sb-platform-lbl">Metabase</span>
       </div>
       <a href="#" class="sb-item" id="sbMetabase" onclick="goPage('metabase',this);return false;"><span class="ico">🗄️</span>Assinantes</a>
+    </div>
+    <div class="sb-platform-group" style="margin-top:8px" id="sbResumoGroup">
+      <div class="sb-platform-hd">
+        <div class="sb-platform-icon" style="background:linear-gradient(135deg,#334155,#64748b)">Σ</div>
+        <span class="sb-platform-lbl">Resumo</span>
+      </div>
+      <a href="#" class="sb-item" id="sbResumo" onclick="goPage('resumo',this);return false;"><span class="ico">🧭</span>Panorama Geral</a>
     </div>
     <a href="#" class="sb-item" id="sbPesquisa" style="display:none" onclick="goPage('pesquisa',this);return false;"><span class="ico">💬</span>Pesquisa</a>
   </div>
@@ -475,6 +491,13 @@ details.desk-only{display:block!important;}
     </div>
 
     <!-- SEO -->
+    <div class="page-section" id="page-google-diario">
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <div id="gDiarioGran"></div>
+      </div>
+      <div id="gDailyCharts"></div>
+    </div>
+
     <div class="page-section" id="page-seo">
       <div class="krow k3 mb14" id="seoKpis"></div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:8px" id="seoGranBar"></div>
@@ -515,6 +538,27 @@ details.desk-only{display:block!important;}
       </div>
     </div>
 
+    <!-- LINKEDIN ADS -->
+    <div class="page-section" id="page-linkedin">
+      <div class="krow k4 mb14" id="liKpis"></div>
+      <div class="krow k4 mb14" id="liKpis2"></div>
+      <div class="cc mb14">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+          <div><div class="cc-t">Evolução</div><div class="cc-s">Investimento (barras) · Seguidores e Engajamentos (linhas)</div></div>
+          <div id="liGran"></div>
+        </div>
+        <div class="cw" style="height:220px" id="chLiWrap"><canvas id="chLi"></canvas></div>
+      </div>
+      <div class="section mb14">
+        <div class="sec-hd">Campanhas</div>
+        <div class="tc" id="liCamps"></div>
+      </div>
+      <div class="section">
+        <div class="sec-hd">Criativos</div>
+        <div class="tc" id="liCreatives"></div>
+      </div>
+    </div>
+
     <!-- METABASE (assinantes) -->
     <div class="page-section" id="page-metabase">
       <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;box-shadow:var(--sh)">
@@ -544,7 +588,7 @@ details.desk-only{display:block!important;}
         </div>
         <div class="cc">
           <div class="cc-t">Funil de Assinantes</div>
-          <div class="cc-s">Cadastro → verificação → onboarding → plano pago (snapshot do plano atual)</div>
+          <div class="cc-s">Cadastro → verificação → plano pago (snapshot do plano atual)</div>
           <div id="mbFunnel" style="display:flex;flex-direction:column;gap:8px;padding:12px 4px 4px"></div>
         </div>
       </div>
@@ -590,6 +634,15 @@ details.desk-only{display:block!important;}
         </div>
         <div id="mbDrillTables" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;padding:12px"></div>
       </div>
+    </div>
+
+    <!-- RESUMO GERAL -->
+    <div class="page-section" id="page-resumo">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-left:3px solid #64748b;border-radius:var(--r);padding:9px 12px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:1.5">
+        <span style="font-size:13px">🧭</span>
+        <span>Panorama por plataforma no período do <strong style="color:var(--text)">filtro global</strong>. Moedas diferentes por plataforma — valores não são somados entre elas.</span>
+      </div>
+      <div id="resumoCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px"></div>
     </div>
 
     <!-- META ADS — HISTÓRICO -->
@@ -686,6 +739,10 @@ const SEO_DAILY      = null;
 const SEO_KEYWORDS   = null;
 const SEO_PAGES      = null;
 const SEO_COUNTRIES  = null;
+// LinkedIn Ads
+const LI_DAILY = null;
+const LI_KPIS  = null;
+const LI_CAMPS = null;
 // Metabase (assinantes)
 const METABASE_DATA  = null;
 
@@ -710,7 +767,7 @@ let filtroLct=true, periodDays=30, dateI=null, dateF=null, showLabels=true, labe
 let chartMode='conversoes'; // 'conversoes' | 'reconhecimento' | 'engajamento'
 let pesFilters={};
 // Granularidade por aba: 'dia' | 'sem' | 'mes'
-let viewMeta='dia', viewDiario='dia', viewGoogle='dia', viewSeo='dia', viewMb='mes', viewMbPaid='mes';
+let viewMeta='dia', viewDiario='dia', viewGoogle='dia', viewSeo='dia', viewMb='mes', viewMbPaid='mes', viewLi='dia', viewGDiario='dia';
 
 // ═══ UTILS ═══
 const fR=v=>(v==null||isNaN(v))?'—':'R$'+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -852,7 +909,13 @@ function deltaBadge(atual,anterior,inverso){
 // ═══ GRANULARIDADE (dia / semana / mês) ═══
 // Agrega uma série diária já filtrada; sumKeys somados, ratesFn recalcula taxas
 function aggDailyView(f,view,sumKeys,ratesFn){
-  if(!f||!f.days||view==='dia'||!view) return f;
+  if(!f||!f.days) return f;
+  if(view==='dia'||!view){
+    if(!ratesFn) return f;
+    const out={...f};   // recalcula taxas também no diário (séries sem taxas pré-computadas, ex.: Google)
+    ratesFn(out);
+    return out;
+  }
   const bk={},order=[];
   f.days.forEach((s,i)=>{
     const dt=parseDayStr(s); let key,lbl;
@@ -888,6 +951,8 @@ function googleRates(o){
   o.cpa=o.days.map((_,i)=>o.conversions?.[i]>0?r2((o.spend?.[i]||0)/o.conversions[i]):null);
   o.cpc=o.days.map((_,i)=>o.clicks?.[i]>0?r2((o.spend?.[i]||0)/o.clicks[i]):null);
   o.ctr=o.days.map((_,i)=>o.impressions?.[i]>0?r2((o.clicks?.[i]||0)/o.impressions[i]*100):null);
+  o.cpm=o.days.map((_,i)=>o.impressions?.[i]>0?r2((o.spend?.[i]||0)/o.impressions[i]*1000):null);
+  o.tx_conv=o.days.map((_,i)=>o.clicks?.[i]>0?r2((o.conversions?.[i]||0)/o.clicks[i]*100):null);
 }
 const GRAN_LBL={dia:'Diário',sem:'Semanal',mes:'Mensal'};
 function granPills(fn,cur){
@@ -901,6 +966,8 @@ function setViewGoogle(v,b){viewGoogle=v;granUi(b);renderGoogle();}
 function setViewSeo(v,b){viewSeo=v;granUi(b);renderSeo();}
 function setViewMb(v,b){viewMb=v;granUi(b);renderMetabase();}
 function setViewMbPaid(v,b){viewMbPaid=v;granUi(b);renderMetabase();}
+function setViewLi(v,b){viewLi=v;granUi(b);renderLinkedin();}
+function setViewGDiario(v,b){viewGDiario=v;granUi(b);renderGoogleDiario();}
 
 // ═══ CHARTS ═══
 const CH={},PC={};
@@ -1729,6 +1796,150 @@ function renderDiarioCharts(){
   });
 }
 
+// ═══ GOOGLE MÉTRICAS DIÁRIAS ═══
+function renderGoogleDiario(){
+  if(!GOOGLE_DAILY) return;
+  const fD=v=>(v==null||isNaN(v))?'—':'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const gg=document.getElementById('gDiarioGran');
+  if(gg&&!gg.innerHTML) gg.innerHTML=granPills('setViewGDiario',viewGDiario);
+  const gd=aggDailyView(applyPeriod(GOOGLE_DAILY),viewGDiario,['spend','impressions','clicks','conversions'],googleRates);
+  const el=document.getElementById('gDailyCharts');
+  if(!gd||!gd.days?.length){el.innerHTML='<div style="padding:20px;color:var(--muted);font-size:12px;text-align:center">Sem dados de Google Ads no período selecionado</div>';return;}
+  const sum=k=>(gd[k]||[]).reduce((a,b)=>a+(b||0),0);
+  const tSp=sum('spend'),tImp=sum('impressions'),tCl=sum('clicks'),tCv=sum('conversions');
+  const AVGS={
+    ctr:  tImp>0?r2(tCl/tImp*100):null,
+    cpm:  tImp>0?r2(tSp/tImp*1000):null,
+    cpc:  tCl>0?r2(tSp/tCl):null,
+    cpa:  tCv>0?r2(tSp/tCv):null,
+    tx_cv:tCl>0?r2(tCv/tCl*100):null,
+  };
+  const METRICS=[
+    {id:'ctr',  ttl:'CTR (%)',              suffix:'%', data:()=>gd.ctr},
+    {id:'cpm',  ttl:'CPM ($)',              suffix:'',  fmt:v=>v!=null?fD(v):null, data:()=>gd.cpm},
+    {id:'cpc',  ttl:'CPC ($)',              suffix:'',  fmt:v=>v!=null?fD(v):null, data:()=>gd.cpc},
+    {id:'cpa',  ttl:'Custo por Conversão ($)', suffix:'', fmt:v=>v!=null?fD(v):null, data:()=>gd.cpa},
+    {id:'tx_cv',ttl:'Taxa de Conversão (%)', suffix:'%', data:()=>gd.tx_conv},
+  ];
+  el.innerHTML=METRICS.map(m=>`<div class="daily-row">
+      <div class="daily-side">
+        <div class="ds-lbl">Período</div>
+        <div class="ds-val" id="gavg_${m.id}" style="color:#3b82f6">—</div>
+      </div>
+      <div class="daily-main">
+        <div class="daily-ttl">${m.ttl}</div>
+        <div class="cw" style="height:140px"><canvas id="gch_${m.id}"></canvas></div>
+      </div>
+    </div>`).join('');
+  METRICS.forEach(m=>{
+    const data=m.data(); const avgVal=AVGS[m.id];
+    const avgLine=data?.map(()=>avgVal);
+    const COLOR='#3b82f6';
+    const fmtAvg=m.fmt?m.fmt(avgVal):(avgVal!=null?avgVal.toFixed(2)+m.suffix:'—');
+    const avgEl=document.getElementById(`gavg_${m.id}`);
+    if(avgEl) avgEl.textContent=fmtAvg;
+    const id=`gch_${m.id}`;
+    if(CH[id]){CH[id].destroy();delete CH[id];}
+    CH[id]=new Chart(document.getElementById(id),{type:'line',
+      data:{labels:gd.days,datasets:[
+        {label:m.ttl,data,borderColor:COLOR,backgroundColor:COLOR+'18',fill:true,
+         tension:.3,pointRadius:2,borderWidth:2,spanGaps:true,
+         datalabels:{display:ctx=>showLabels,color:COLOR,font:{size:labelSize,weight:'bold'},
+           formatter:v=>v==null?null:(m.fmt?m.fmt(v):v.toFixed(1)+m.suffix),anchor:'top',align:'top',offset:2,clip:false}},
+        {label:'Média período',data:avgLine,borderColor:DARK()?'#fff':'#111',borderDash:[4,4],backgroundColor:'transparent',
+         pointRadius:0,borderWidth:1.5,spanGaps:true,datalabels:{display:false}},
+      ]},
+      options:{...bo(),scales:{
+        x:{ticks:{color:TXT(),font:bf,maxTicksLimit:14},grid:{color:GRID()}},
+        y:{ticks:{color:TXT(),font:bf,callback:v=>m.fmt?('$'+Number(v).toFixed(m.id==='cpm'||v<10?2:0)):v+m.suffix},grid:{color:GRID()},min:0}
+      }}
+    });
+  });
+}
+
+// ═══ RESUMO GERAL ═══
+function renderResumo(){
+  const fD=v=>(v==null||isNaN(v))?'—':'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const sum=a=>(a||[]).reduce((x,y)=>x+(y||0),0);
+  const rngAnt=rangeAnteriorG();
+  const line=(l,v)=>`<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 0;border-bottom:1px dashed var(--border)"><span style="color:var(--muted)">${l}</span><span style="font-weight:700;color:var(--text)">${v}</span></div>`;
+  const card=(nome,icone,corIcone,invHtml,linhas)=>`
+    <div class="cc" style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:26px;height:26px;border-radius:7px;background:${corIcone};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800">${icone}</div>
+        <div class="cc-t" style="margin:0">${nome}</div>
+      </div>
+      ${invHtml}
+      <div>${linhas.join('')}</div>
+    </div>`;
+  const inv=(val,delta)=>`
+      <div>
+        <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Investimento</div>
+        <div style="font-size:20px;font-weight:800;color:var(--text);line-height:1.2">${val}</div>
+        <div style="font-size:9px;color:var(--muted2)">${delta||'&nbsp;'}</div>
+      </div>`;
+  const cards=[];
+
+  // Meta (R$)
+  const md=getMD();
+  if(md){
+    const sp=sum(md.spend), ld=sum(md.leads), imp=sum(md.impressions), eng=sum(md.engagement);
+    const pv=rngAnt?applyRange(getMDraw(),rngAnt):null;
+    cards.push(card('Meta Ads','f','linear-gradient(135deg,#1877f2,#4a9ff5)',
+      inv(fR(sp),deltaBadge(sp,pv?sum(pv.spend):null,'neutro')),
+      [line('Leads',fN(ld)),line('CPL',ld>0?fR(sp/ld):'—'),
+       line('Engajamentos',fN(eng)),line('Custo/Engajamento',eng>0?fR(sp/eng):'—'),
+       line('Impressões',fN(imp))]));
+  }
+  // Google ($)
+  if(GOOGLE_DAILY){
+    const gd=applyPeriod(GOOGLE_DAILY)||GOOGLE_DAILY;
+    const sp=sum(gd.spend), cv=sum(gd.conversions), cl=sum(gd.clicks);
+    const pv=rngAnt?applyRange(GOOGLE_DAILY,rngAnt):null;
+    cards.push(card('Google Ads','G','linear-gradient(135deg,#ea4335,#fbbc05)',
+      inv(fD(sp),deltaBadge(sp,pv?sum(pv.spend):null,'neutro')),
+      [line('Conversões',fN(Math.round(cv))),line('CPA',cv>0?fD(sp/cv):'—'),line('Cliques',fN(cl))]));
+  }
+  // LinkedIn ($)
+  if(LI_DAILY&&LI_KPIS){
+    const ld=applyPeriod(LI_DAILY)||LI_DAILY;
+    const sp=sum(ld.spend), fo=sum(ld.follows), imp=sum(ld.impressions);
+    const pv=rngAnt?applyRange(LI_DAILY,rngAnt):null;
+    cards.push(card('LinkedIn Ads','in','linear-gradient(135deg,#0a66c2,#4a9fe8)',
+      inv(fD(sp),deltaBadge(sp,pv?sum(pv.spend):null,'neutro')),
+      [line('Seguidores',fN(fo)),line('Custo/Seguidor',fo>0?fD(sp/fo):'—'),line('Impressões',fN(imp))]));
+  }
+  // SEO (orgânico — sem investimento)
+  if(SEO_DAILY){
+    const sd=applyPeriod(SEO_DAILY)||SEO_DAILY;
+    const im=sum(sd.impressions), ck=sum(sd.clicks);
+    cards.push(card('SEO','S','linear-gradient(135deg,#8b5cf6,#a78bfa)',
+      `<div>
+        <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Canal orgânico</div>
+        <div style="font-size:20px;font-weight:800;color:var(--text);line-height:1.2">R$0,00</div>
+        <div style="font-size:9px;color:var(--muted2)">sem mídia paga</div>
+      </div>`,
+      [line('Impressões',fN(im)),line('Cliques',fN(ck)),line('CTR',im>0?r2(ck/im*100)+'%':'—')]));
+  }
+  // Assinantes (Metabase) — filtro GLOBAL aplicado sobre created_at
+  const mrows=mbRows();
+  if(mrows){
+    const rng=rangeAtualG();
+    const rows=rng?mrows.filter(r=>r.dt>=rng.ini&&r.dt<=rng.fim):mrows;
+    const tot=rows.reduce((a,r)=>a+r.n,0);
+    const paid=rows.filter(r=>MB_PAID_FAM.includes(r.fam)).reduce((a,r)=>a+r.n,0);
+    const ver=rows.filter(r=>r.ver).reduce((a,r)=>a+r.n,0);
+    cards.push(card('Assinantes','M','linear-gradient(135deg,#7c3aed,#a78bfa)',
+      `<div>
+        <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Cadastros no período</div>
+        <div style="font-size:20px;font-weight:800;color:var(--text);line-height:1.2">${fN(tot)}</div>
+        <div style="font-size:9px;color:var(--muted2)">via metabase-export</div>
+      </div>`,
+      [line('E-mail verificado',tot>0?r2(ver/tot*100)+'%':'—'),line('Planos pagos',fN(paid)),line('% pagos',tot>0?r2(paid/tot*100)+'%':'—')]));
+  }
+  document.getElementById('resumoCards').innerHTML=cards.join('')||'<div style="padding:20px;color:var(--muted);font-size:12px">Sem dados.</div>';
+}
+
 // ═══ PESQUISA ═══
 const PIZZA_COLS=['#3b82f6','#60a5fa','#1d4ed8','#93c5fd','#1e40af','#bfdbfe','#172554','#eff6ff'];
 
@@ -2234,6 +2445,92 @@ function renderSeo(){
   }
 }
 
+// ═══ LINKEDIN ADS ═══
+function renderLinkedin(){
+  if(!LI_KPIS||!LI_DAILY) return;
+  const fD=v=>(v==null||isNaN(v))?'—':'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const gl=document.getElementById('liGran'); if(gl)gl.innerHTML=granPills('setViewLi',viewLi);
+  const ld0=applyPeriod(LI_DAILY)||LI_DAILY;
+  const sum=a=>(a||[]).reduce((x,y)=>x+(y||0),0);
+  const sp=sum(ld0.spend), imp=sum(ld0.impressions), cl=sum(ld0.clicks), fo=sum(ld0.follows), en=sum(ld0.engagements);
+  const ctr=imp>0?r2(cl/imp*100):null, cpc=cl>0?r2(sp/cl):null, cpm=imp>0?r2(sp/imp*1000):null,
+        cpf=fo>0?r2(sp/fo):null, engR=imp>0?r2(en/imp*100):null;
+  // Período anterior — deltas
+  const rngA=rangeAnteriorG();
+  const pd=rngA?applyRange(LI_DAILY,rngA):null;
+  const pSp=pd?sum(pd.spend):null, pImp=pd?sum(pd.impressions):null, pCl=pd?sum(pd.clicks):null,
+        pFo=pd?sum(pd.follows):null, pEn=pd?sum(pd.engagements):null;
+  const pCpf=pd?(pFo>0?r2(pSp/pFo):null):null, pCtr=pd?(pImp>0?r2(pCl/pImp*100):null):null;
+  document.getElementById('liKpis').innerHTML=`
+    <div class="kpi" style="--kc:#0a66c2"><div class="kpi-lbl">Investimento</div><div class="kpi-val" style="color:var(--text)">${fD(sp)}</div><div class="kpi-sub">${deltaBadge(sp,pSp,'neutro')||'LinkedIn Ads'}</div></div>
+    <div class="kpi" style="--kc:#8b5cf6"><div class="kpi-lbl">Impressões</div><div class="kpi-val" style="color:var(--text)">${fN(imp)}</div><div class="kpi-sub">${deltaBadge(imp,pImp)||'CPM: '+(cpm!=null?fD(cpm):'—')}</div></div>
+    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Seguidores</div><div class="kpi-val" style="color:var(--text)">${fN(fo)}</div><div class="kpi-sub">${deltaBadge(fo,pFo)||'novos seguidores'}</div></div>
+    <div class="kpi" style="--kc:#f59e0b"><div class="kpi-lbl">Custo / Seguidor</div><div class="kpi-val" style="color:var(--text)">${cpf!=null?fD(cpf):'—'}</div><div class="kpi-sub">${deltaBadge(cpf,pCpf,true)||'investimento / seguidores'}</div></div>`;
+  document.getElementById('liKpis2').innerHTML=`
+    <div class="kpi" style="--kc:#3b82f6"><div class="kpi-lbl">Cliques</div><div class="kpi-val" style="color:var(--text)">${fN(cl)}</div><div class="kpi-sub">${deltaBadge(cl,pCl)||'CPC: '+(cpc!=null?fD(cpc):'—')}</div></div>
+    <div class="kpi" style="--kc:#8b5cf6"><div class="kpi-lbl">CTR</div><div class="kpi-val" style="color:var(--text)">${ctr!=null?ctr+'%':'—'}</div><div class="kpi-sub">${deltaBadge(ctr,pCtr)||'cliques / impressões'}</div></div>
+    <div class="kpi" style="--kc:#059669"><div class="kpi-lbl">Engajamentos</div><div class="kpi-val" style="color:var(--text)">${fN(en)}</div><div class="kpi-sub">${deltaBadge(en,pEn)||'reações, cliques e interações'}</div></div>
+    <div class="kpi" style="--kc:#f59e0b"><div class="kpi-lbl">Tx. Engajamento</div><div class="kpi-val" style="color:var(--text)">${engR!=null?engR+'%':'—'}</div><div class="kpi-sub">engajamentos / impressões</div></div>`;
+
+  // Gráfico: barras investimento + linhas seguidores/engajamentos (granularidade)
+  const liCanvas=()=>{if(!document.getElementById('chLi')){const w=document.getElementById('chLiWrap');if(w)w.innerHTML='<canvas id="chLi"></canvas>';}};
+  const ld=aggDailyView(applyPeriod(LI_DAILY),viewLi,['spend','impressions','clicks','follows','engagements']);
+  if(!ld||!ld.days?.length){
+    dc('chLi');
+    const w=document.getElementById('chLiWrap');
+    if(w)w.innerHTML='<div style="height:100%;min-height:160px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Sem dados de LinkedIn no período selecionado</div>';
+  } else {
+    liCanvas(); dc('chLi');
+    CH['chLi']=new Chart(document.getElementById('chLi'),{type:'bar',
+      data:{labels:ld.days,datasets:[
+        {type:'line',label:'Seguidores',data:ld.follows,yAxisID:'y1',borderColor:'#059669',backgroundColor:'transparent',tension:.3,pointRadius:ld.days.length>60?0:2,borderWidth:2,spanGaps:true,order:0,
+          datalabels:{display:ctx=>showLabels&&ld.days.length<=40,color:'#059669',font:{size:labelSize,weight:'bold'},anchor:'end',align:'top',offset:2,clip:false,formatter:v=>v>0?fN(v):null}},
+        {type:'line',label:'Engajamentos',data:ld.engagements,yAxisID:'y1',borderColor:'#f59e0b',backgroundColor:'transparent',tension:.3,pointRadius:ld.days.length>60?0:2,borderWidth:2,borderDash:[4,3],spanGaps:true,order:0,
+          datalabels:{display:false}},
+        {label:'Investimento',data:ld.spend,backgroundColor:'rgba(10,102,194,.65)',borderRadius:3,order:1,
+          datalabels:{display:ctx=>showLabels&&ld.days.length<=40,color:'#0a66c2',font:{size:labelSize,weight:'bold'},anchor:'end',align:'top',offset:2,clip:false,formatter:v=>v>0?fD(v):null}},
+      ]},
+      options:{...bo(),plugins:{legend:{display:true,labels:{color:TXT(),font:bf,boxWidth:10}},datalabels:{display:false},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.dataset.label==='Investimento'?fD(c.raw):fN(c.raw))}}},
+        scales:{x:{ticks:{color:TXT(),font:bf,maxTicksLimit:16},grid:{display:false}},
+          y:{ticks:{color:TXT(),font:bf,callback:v=>fD(v)},grid:{color:GRID()},min:0},
+          y1:{position:'right',min:0,ticks:{color:'#059669',font:bf},grid:{display:false}}}}
+    });
+  }
+
+  // Tabelas: campanhas e criativos (dados gerais — não filtrados por data)
+  const stDot=st=>{const on=(st||'').toUpperCase()==='ACTIVE';return `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${on?'#22c55e':'#94a3b8'};margin-right:6px" title="${st||'—'}"></span>`;};
+  const camps=LI_CAMPS||[];
+  const th=(t,left)=>`<th class="${left?'':'num'}" style="font-size:9px;padding:6px 10px;${left?'text-align:left;':''}color:var(--muted);text-transform:uppercase">${t}</th>`;
+  document.getElementById('liCamps').innerHTML=`<table style="min-width:760px;width:100%;border-collapse:collapse">
+    <thead><tr style="background:var(--surface2)">${th('Campanha',1)}${th('Investimento')}${th('Impressões')}${th('Cliques')}${th('CTR')}${th('CPC')}${th('Seguidores')}${th('Custo/Seg.')}${th('Engaj.')}</tr></thead>
+    <tbody>${camps.map(c=>`<tr>
+      <td style="font-size:11px;padding:7px 10px;font-weight:600;max-width:260px;word-break:break-word;white-space:normal;line-height:1.4">${stDot(c.status)}${c.campaign}<div style="font-size:9px;color:var(--muted2);font-weight:400;margin-left:13px">${c.group} · ${c.objective}</div></td>
+      <td class="num" style="font-size:11px;padding:7px 10px;font-weight:700">${fD(c.spend)}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px">${fN(c.impressions)}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px">${fN(c.clicks)}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px">${c.ctr!=null?c.ctr+'%':'—'}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px">${c.cpc!=null?fD(c.cpc):'—'}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px;font-weight:700;color:#059669">${fN(c.follows)}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px">${c.cpf!=null?fD(c.cpf):'—'}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px">${fN(c.engagements)}</td>
+    </tr>`).join('')}</tbody></table>
+    <div style="font-size:9px;color:var(--muted2);padding:6px 10px">Tabelas de campanhas e criativos são acumulados gerais — não respondem ao filtro de data.</div>`;
+  const creatives=camps.flatMap(c=>(c.creatives||[]).map(cr=>({...cr,campaign:c.campaign}))).sort((a,b)=>b.spend-a.spend);
+  document.getElementById('liCreatives').innerHTML=`<table style="min-width:620px;width:100%;border-collapse:collapse">
+    <thead><tr style="background:var(--surface2)">${th('Criativo',1)}${th('Campanha',1)}${th('Investimento')}${th('Impressões')}${th('Cliques')}${th('CTR')}${th('Seguidores')}${th('Engaj.')}</tr></thead>
+    <tbody>${creatives.map(cr=>`<tr>
+      <td style="font-size:11px;padding:7px 10px;font-weight:600">${cr.creative}</td>
+      <td style="font-size:10px;padding:7px 10px;color:var(--muted2);max-width:220px;word-break:break-word;white-space:normal">${cr.campaign}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px;font-weight:700">${fD(cr.spend)}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px">${fN(cr.impressions)}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px">${fN(cr.clicks)}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px">${cr.ctr!=null?cr.ctr+'%':'—'}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px;color:#059669">${fN(cr.follows)}</td>
+      <td class="num" style="font-size:11px;padding:7px 10px">${fN(cr.engagements)}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
 // ═══ METABASE (assinantes) ═══
 // Filtro próprio, independente do global — baseado em subscribed_at
 let mbDays=365, mbDateI=null, mbDateF=null; // padrão: 12 meses
@@ -2243,6 +2540,7 @@ const MB_COLS=['#7c3aed','#a78bfa','#4c1d95','#c4b5fd','#5b21b6','#ddd6fe','#2e1
 function mbPlanFamily(p){
   const s=(p||'').toLowerCase();
   if(s.startsWith('starter'))    return 'Starter';
+  if(s.startsWith('free'))       return 'Free Trial';
   if(s.startsWith('business'))   return 'Business';
   if(s.startsWith('enterprise')) return 'Enterprise';
   if(s.startsWith('pro'))        return 'Pro';
@@ -2341,11 +2639,10 @@ function mbBarLabels(color){
 }
 
 // Funil HTML: Cadastrados → Verificados → Onboarding → Pagos
-function mbFunnelHtml(tot,ver,onb,paid){
+function mbFunnelHtml(tot,ver,paid){
   const steps=[
     {lbl:'Cadastrados',v:tot,c:'#7c3aed'},
     {lbl:'E-mail verificado',v:ver,c:'#059669'},
-    {lbl:'Onboarding',v:onb,c:'#f59e0b'},
     {lbl:'Planos pagos',v:paid,c:'#3b82f6'},
   ];
   const max=Math.max(tot,1);
@@ -2364,7 +2661,7 @@ function mbFunnelHtml(tot,ver,onb,paid){
         <div style="height:100%;width:${w}%;background:${s.c};border-radius:6px;transition:width .4s"></div>
       </div>
     </div>`;}).join('')+
-    `<div style="font-size:9px;color:var(--muted2);line-height:1.5;margin-top:2px">* Etapas por plano atual (snapshot): "Onboarding" = plano onboarding hoje; quem já virou pago não conta mais nessa etapa.</div>`;
+    `<div style="font-size:9px;color:var(--muted2);line-height:1.5;margin-top:2px">* Snapshot do plano atual — pagos = Business, Enterprise e Pro. Novo modelo: 30 dias de free trial e depois plano pago.</div>`;
 }
 
 function renderMetabase(){
@@ -2374,7 +2671,6 @@ function renderMetabase(){
 
   const tot=rows.reduce((a,r)=>a+r.n,0);
   const totVer=rows.filter(r=>r.ver).reduce((a,r)=>a+r.n,0);
-  const totOnb=rows.filter(r=>r.fam==='Onboarding').reduce((a,r)=>a+r.n,0);
   const totPaid=rows.filter(r=>MB_PAID_FAM.includes(r.fam)).reduce((a,r)=>a+r.n,0);
   const totUtm=rows.filter(r=>r.src!=='(sem utm)').reduce((a,r)=>a+r.n,0);
   const pct=(a,b)=>b>0?(a/b*100).toFixed(1)+'%':'—';
@@ -2430,7 +2726,7 @@ function renderMetabase(){
   });
 
   // Funil
-  document.getElementById('mbFunnel').innerHTML=mbFunnelHtml(tot,totVer,totOnb,totPaid);
+  document.getElementById('mbFunnel').innerHTML=mbFunnelHtml(tot,totVer,totPaid);
 
   // Donuts
   const agg=(key)=>{const o={};rows.forEach(r=>{o[key(r)]=(o[key(r)]||0)+r.n;});return Object.entries(o).sort((a,b)=>b[1]-a[1]);};
@@ -2470,15 +2766,15 @@ function renderMetabase(){
   // Tabela por origem — clique abre drill-down das demais UTMs
   const bySrc={};
   rows.forEach(r=>{
-    const o=bySrc[r.src]=bySrc[r.src]||{n:0,ver:0,Starter:0,Business:0,Enterprise:0,Pro:0,Onboarding:0,Outros:0};
+    const o=bySrc[r.src]=bySrc[r.src]||{n:0,ver:0,Starter:0,'Free Trial':0,Business:0,Enterprise:0,Pro:0,Onboarding:0,Outros:0};
     o.n+=r.n; if(r.ver)o.ver+=r.n; o[r.fam]+=r.n;
   });
   const srcRows=Object.entries(bySrc).sort((a,b)=>b[1].n-a[1].n);
   mbSrcList=srcRows.map(([s])=>s);
   const th=(t,left)=>`<th class="${left?'':'num'}" style="font-size:9px;padding:6px 10px;${left?'text-align:left;':''}color:var(--muted);text-transform:uppercase">${t}</th>`;
-  document.getElementById('mbSrcTable').innerHTML=`<table style="min-width:920px;width:100%;border-collapse:collapse">
+  document.getElementById('mbSrcTable').innerHTML=`<table style="min-width:980px;width:100%;border-collapse:collapse">
     <thead><tr style="background:var(--surface2)">
-      ${th('Origem (utm_source)',1)}${th('Cadastros')}${th('Verificados')}${th('% Verif.')}${th('Pagos')}${th('% Pagos')}${th('Starter')}${th('Business')}${th('Enterprise')}${th('Pro')}${th('Onboarding')}${th('Outros')}
+      ${th('Origem (utm_source)',1)}${th('Cadastros')}${th('Verificados')}${th('% Verif.')}${th('Pagos')}${th('% Pagos')}${th('Starter')}${th('Free Trial')}${th('Business')}${th('Enterprise')}${th('Pro')}${th('Onboarding')}${th('Outros')}
     </tr></thead>
     <tbody>${srcRows.map(([s,o],i)=>{
       const paid=o.Business+o.Enterprise+o.Pro;
@@ -2491,6 +2787,7 @@ function renderMetabase(){
         <td class="num" style="font-size:11px;padding:6px 10px;font-weight:700;color:#7c3aed">${fN(paid)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px;color:#7c3aed">${pct(paid,o.n)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px;color:var(--muted2)">${fN(o.Starter)}</td>
+        <td class="num" style="font-size:11px;padding:6px 10px;color:#0ea5e9">${fN(o['Free Trial'])}</td>
         <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Business)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Enterprise)}</td>
         <td class="num" style="font-size:11px;padding:6px 10px">${fN(o.Pro)}</td>
@@ -2504,7 +2801,7 @@ function renderMetabase(){
       <td class="num" style="font-size:11px;padding:6px 10px">${pct(totVer,tot)}</td>
       <td class="num" style="font-size:11px;padding:6px 10px;color:#7c3aed">${fN(totPaid)}</td>
       <td class="num" style="font-size:11px;padding:6px 10px;color:#7c3aed">${pct(totPaid,tot)}</td>
-      <td class="num" colspan="6" style="font-size:10px;padding:6px 10px;color:var(--muted2);text-align:right">famílias somadas por origem</td>
+      <td class="num" colspan="7" style="font-size:10px;padding:6px 10px;color:var(--muted2);text-align:right">famílias somadas por origem</td>
     </tr></tfoot>
   </table>`;
 
@@ -2819,8 +3116,11 @@ function rerenderActive(){
   if(p==='meta-hist')   renderMetaHist();
   if(p==='google')      renderGoogle();
   if(p==='google-hist') renderGoogleHist();
+  if(p==='google-diario') renderGoogleDiario();
   if(p==='seo')         renderSeo();
+  if(p==='linkedin')    renderLinkedin();
   if(p==='metabase')    renderMetabase();
+  if(p==='resumo')      renderResumo();
   if(p==='pesquisa')    renderPesquisa();
   setTimeout(()=>{Object.values({...CH,...PC}).forEach(c=>{try{c.resize();}catch(e){}});},60);
 }
@@ -2831,7 +3131,7 @@ function goPage(p,btn){
   document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
   document.getElementById('page-'+p)?.classList.add('active');
   if(btn) btn.classList.add('active');
-  const titles={'meta':'Meta Ads — Geral','diario':'Métricas Diárias','meta-hist':'Meta Ads — Histórico','google':'Google Ads','google-hist':'Google Ads — Histórico','seo':'SEO','metabase':'Metabase — Assinantes','pesquisa':'Pesquisa'};
+  const titles={'meta':'Meta Ads — Geral','diario':'Métricas Diárias','meta-hist':'Meta Ads — Histórico','google':'Google Ads','google-hist':'Google Ads — Histórico','google-diario':'Google Ads — Métricas Diárias','seo':'SEO','linkedin':'LinkedIn Ads','metabase':'Metabase — Assinantes','resumo':'Resumo Geral','pesquisa':'Pesquisa'};
   document.getElementById('pageTitle').textContent=titles[p]||p;
   // Metabase tem filtro de datas próprio — esconde o filtro global do topo p/ não duplicar
   const _gPb=document.querySelector('.topbar-r .period-bar');
@@ -2844,8 +3144,11 @@ function goPage(p,btn){
   if(p==='meta-hist')   renderMetaHist();
   if(p==='google')      renderGoogle();
   if(p==='google-hist') renderGoogleHist();
+  if(p==='google-diario') renderGoogleDiario();
   if(p==='seo')         renderSeo();
+  if(p==='linkedin')    renderLinkedin();
   if(p==='metabase')    renderMetabase();
+  if(p==='resumo')      renderResumo();
   if(p==='pesquisa')    renderPesquisa();
   setTimeout(()=>{Object.values({...CH,...PC}).forEach(c=>{try{c.resize();}catch(e){}});},80);
   if(window.innerWidth<=768) closeSb();
@@ -2908,6 +3211,13 @@ window.addEventListener('resize', ajustarPaddingContent);
     if(sbP) sbP.style.display='none';
     if(pgP) pgP.style.display='none';
   }
+  // LinkedIn: mostrar só se dados injetados
+  const sbLiG=document.getElementById('sbLinkedinGroup');
+  const pgLi=document.getElementById('page-linkedin');
+  if(!(LI_KPIS&&LI_DAILY)){
+    if(sbLiG) sbLiG.style.display='none';
+    if(pgLi) pgLi.style.display='none';
+  }
   // Metabase: mostrar só se dados injetados
   const sbMbG=document.getElementById('sbMetabaseGroup');
   const pgMb=document.getElementById('page-metabase');
@@ -2951,9 +3261,12 @@ async function _gchk(){
   }
   const _hu=await _h(_u);
   const _hc=await _h(_u+_p);
-  const _C1='e2a530e251d3675034d23f5c5f87f54ec3182a088ba7d13350824794f8e6b76e';
-  const _C2='45831ca891a4ecbd5168ed617bffb81fa067494e97c5d91de4510a846f65bf79';
-  if(_hu===_C1&&_hc===_C2){
+  // Credenciais válidas: [hash(usuário), hash(usuário+senha)]
+  const _CREDS=[
+    ['e2a530e251d3675034d23f5c5f87f54ec3182a088ba7d13350824794f8e6b76e','45831ca891a4ecbd5168ed617bffb81fa067494e97c5d91de4510a846f65bf79'],
+    ['8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918','b9fad3cc3829568026cf653b01d84d8561ed6c2ce223c3457851a06f76ae2784'],
+  ];
+  if(_CREDS.some(c=>_hu===c[0]&&_hc===c[1])){
     // Mostrar spinner por 1.5s
     document.getElementById('_gx').classList.add('hidden');
     const _sp=document.getElementById('_spin');
