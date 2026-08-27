@@ -137,7 +137,7 @@ def build_daily(p):
         sp=float(r["spend"]); imp=float(r["impressions"]); lc=float(r["link_clicks"])
         pv=float(r["page_view"]); ld=float(r["leads"])
         eng=float(r["engagement"]) if has_eng else 0
-        out["days"].append(r["date"].strftime("%d/%m"))
+        out["days"].append(r["date"].strftime("%d/%m/%y"))
         out["spend"].append(round(sp,2)); out["impressions"].append(int(imp))
         out["link_clicks"].append(int(lc)); out["page_view"].append(int(pv))
         out["leads"].append(int(ld)); out["engagement"].append(int(eng))
@@ -168,7 +168,7 @@ def meta_raw(df):
     ).reset_index()
     for _,r in agg.iterrows():
         rows.append({
-            "d":r["date"].strftime("%d/%m"),"c":str(r["campaign"]),"a":str(r["adset"]),
+            "d":r["date"].strftime("%d/%m/%y"),"c":str(r["campaign"]),"a":str(r["adset"]),
             "lct":bool(r["is_lct"]),"sp":round(float(r["spend"]),2),
             "ld":int(r["leads"]),"imp":int(r["impressions"]),
             "lc":int(r["link_clicks"]),"pv":int(r["page_view"])
@@ -310,14 +310,14 @@ def meta_breakdowns(df):
     if len(df_ga)>0:
         for _,r in df_ga.iterrows():
             if pd.isna(r['date']): continue
-            raw_ga.append({'d':r['date'].strftime('%d/%m'),'age':str(r['age']),'gen':str(r['gender']),
+            raw_ga.append({'d':r['date'].strftime('%d/%m/%y'),'age':str(r['age']),'gen':str(r['gender']),
                            'sp':round(float(r['spend']),2),'ld':int(r['leads']),
                            'lct':bool(r['is_lct']),'camp':str(r['Campaign Name']) if 'Campaign Name' in r.index else ''})
     raw_pt=[]
     if len(df_pt)>0:
         for _,r in df_pt.iterrows():
             if pd.isna(r['date']): continue
-            raw_pt.append({'d':r['date'].strftime('%d/%m'),'plat':str(r['platform']),
+            raw_pt.append({'d':r['date'].strftime('%d/%m/%y'),'plat':str(r['platform']),
                            'sp':round(float(r['spend']),2),'ld':int(r['leads']),
                            'lct':bool(r['is_lct']),'camp':str(r['Campaign Name']) if 'Campaign Name' in r.index else ''})
     result['_raw_ga']=raw_ga; result['_raw_pt']=raw_pt
@@ -354,12 +354,13 @@ def load_google():
 def google_daily(df):
     agg=df.groupby("date").agg(spend=("spend","sum"),conversions=("conversions","sum"),
         clicks=("clicks","sum"),impressions=("impressions","sum")).reset_index().sort_values("date")
-    out={k:[] for k in ["days","spend","conversions","cpa","ctr","cpc"]}
+    out={k:[] for k in ["days","spend","conversions","cpa","ctr","cpc","clicks","impressions"]}
     for _,r in agg.iterrows():
         sp=round(float(r["spend"]),2); cv=round(float(r["conversions"]),2)
         cl=int(r["clicks"]); imp=int(r["impressions"])
-        out["days"].append(r["date"].strftime("%d/%m"))
+        out["days"].append(r["date"].strftime("%d/%m/%y"))
         out["spend"].append(sp); out["conversions"].append(cv)
+        out["clicks"].append(cl); out["impressions"].append(imp)
         out["cpa"].append(round(sp/cv,2) if cv>0 else None)
         out["ctr"].append(round(cl/imp*100,2) if imp>0 else None)
         out["cpc"].append(round(sp/cl,2) if cl>0 else None)
@@ -459,7 +460,7 @@ def google_raw(df):
     ).reset_index()
     for _,r in agg.iterrows():
         rows.append({
-            "d": r["date"].strftime("%d/%m"),
+            "d": r["date"].strftime("%d/%m/%y"),
             "c": str(r["campaign"]), "a": str(r["adgroup"]),
             "kw": str(r["keyword"]), "mt": str(r["match_type"]),
             "sp": round(float(r["spend"]),2),
@@ -513,6 +514,73 @@ def google_breakdowns(df):
 URL_SEO_KW = sheet_url("SEO-keyword")
 URL_SEO_PG = sheet_url("SEO-pages")
 URL_SEO_CO = sheet_url("SEO-country")
+
+# ══ LINKEDIN ADS ═══════════════════════════════
+URL_LINKEDIN = sheet_url("linkedin-ads")
+
+def load_linkedin():
+    print("  Lendo linkedin-ads...")
+    df=pd.read_csv(URL_LINKEDIN)
+    df["date"]=pd.to_datetime(df["Date"],errors="coerce")
+    df=df[df["date"].notna()].copy()
+    num_cols={"spend":"Ad Analytics Cost","impressions":"Ad Analytics Impressions","clicks":"Ad Analytics Clicks",
+              "lp_clicks":"Ad Analytics Landing Page Clicks","leads":"Ad Analytics One Click Leads",
+              "conversions":"Ad Analytics External Website Conversions","follows":"Ad Analytics Follows",
+              "engagements":"Ad Analytics Total Engagements","video_views":"Ad Analytics Video Views"}
+    for k,c in num_cols.items():
+        df[k]=to_num(df[c]) if c in df.columns else 0
+    df["campaign"]=df["Campaign Name"].fillna("—").astype(str)
+    df["group"]=df["Campaign Group Name"].fillna("—").astype(str) if "Campaign Group Name" in df.columns else "—"
+    df["creative"]=df["Creative Name (Creative)"].fillna("—").astype(str) if "Creative Name (Creative)" in df.columns else "—"
+    df["status"]=df["Campaign Status"].fillna("").astype(str) if "Campaign Status" in df.columns else ""
+    df["objective"]=df["Campaign Objective Type"].fillna("").astype(str) if "Campaign Objective Type" in df.columns else ""
+
+    # Série diária (dd/mm/yy — ano sempre presente)
+    agg=df.groupby("date").agg(spend=("spend","sum"),impressions=("impressions","sum"),clicks=("clicks","sum"),
+                               follows=("follows","sum"),engagements=("engagements","sum")).reset_index().sort_values("date")
+    daily={k:[] for k in ["days","spend","impressions","clicks","follows","engagements"]}
+    for _,r in agg.iterrows():
+        daily["days"].append(r["date"].strftime("%d/%m/%y"))
+        daily["spend"].append(round(float(r["spend"]),2))
+        daily["impressions"].append(int(r["impressions"]))
+        daily["clicks"].append(int(r["clicks"]))
+        daily["follows"].append(int(r["follows"]))
+        daily["engagements"].append(int(r["engagements"]))
+
+    # KPIs totais
+    sp=float(df["spend"].sum()); imp=int(df["impressions"].sum()); cl=int(df["clicks"].sum())
+    fo=int(df["follows"].sum()); en=int(df["engagements"].sum())
+    kpis={"spend":round(sp,2),"impressions":imp,"clicks":cl,"follows":fo,"engagements":en,
+          "leads":int(df["leads"].sum()),"conversions":int(df["conversions"].sum()),
+          "lp_clicks":int(df["lp_clicks"].sum()),"video_views":int(df["video_views"].sum()),
+          "ctr":round(cl/imp*100,2) if imp>0 else None,
+          "cpc":round(sp/cl,2) if cl>0 else None,
+          "cpm":round(sp/imp*1000,2) if imp>0 else None,
+          "cpf":round(sp/fo,2) if fo>0 else None,
+          "eng_rate":round(en/imp*100,2) if imp>0 else None}
+
+    # Campanhas (com criativos aninhados) — status p/ bolinha, objetivo no subtítulo
+    camps=[]
+    for camp,pc in df.groupby("campaign"):
+        spc=round(float(pc["spend"].sum()),2); impc=int(pc["impressions"].sum()); clc=int(pc["clicks"].sum())
+        foc=int(pc["follows"].sum()); enc=int(pc["engagements"].sum())
+        creatives=[]
+        for cr,pcr in pc.groupby("creative"):
+            spr=round(float(pcr["spend"].sum()),2); impr=int(pcr["impressions"].sum()); clr=int(pcr["clicks"].sum())
+            creatives.append({"creative":cr,"spend":spr,"impressions":impr,"clicks":clr,
+                              "follows":int(pcr["follows"].sum()),"engagements":int(pcr["engagements"].sum()),
+                              "ctr":round(clr/impr*100,2) if impr>0 else None})
+        creatives.sort(key=lambda x:-x["spend"])
+        camps.append({"campaign":camp,"group":str(pc["group"].iloc[0]),"status":str(pc["status"].iloc[0]),
+                      "objective":str(pc["objective"].iloc[0]),
+                      "spend":spc,"impressions":impc,"clicks":clc,"follows":foc,"engagements":enc,
+                      "ctr":round(clc/impc*100,2) if impc>0 else None,
+                      "cpc":round(spc/clc,2) if clc>0 else None,
+                      "cpf":round(spc/foc,2) if foc>0 else None,
+                      "creatives":creatives})
+    camps.sort(key=lambda x:-x["spend"])
+    print(f"     LinkedIn: $ {sp:.2f} | {imp} impressões | {fo} seguidores | {len(camps)} campanhas | {len(df)} linhas")
+    return daily,kpis,camps
 
 def load_seo():
     print("  Lendo SEO...")
@@ -707,7 +775,8 @@ def replace_js_const(html, name, value):
 
 def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, meta_month, pes,
                g_daily, g_kpis, g_camps, g_kw, g_bd, g_month, g_raw,
-               seo_daily, seo_kw, seo_pages, seo_countries, mb_data):
+               seo_daily, seo_kw, seo_pages, seo_countries, mb_data,
+               li_daily=None, li_kpis=None, li_camps=None):
     html=Path(tpl).read_text(encoding="utf-8")
     # Meta
     html=replace_js_const(html,"META_KPIS",     meta_k)
@@ -734,6 +803,10 @@ def inject_all(tpl, meta_k, meta_d, meta_dc, meta_raw_c, meta_t, meta_bd, meta_m
     html=replace_js_const(html,"SEO_COUNTRIES", seo_countries)
     # Metabase (assinantes)
     html=replace_js_const(html,"METABASE_DATA", mb_data if mb_data else False)
+    # LinkedIn Ads
+    html=replace_js_const(html,"LI_DAILY", li_daily if li_daily else False)
+    html=replace_js_const(html,"LI_KPIS", li_kpis if li_kpis else False)
+    html=replace_js_const(html,"LI_CAMPS", li_camps if li_camps else False)
     _cpl_bom   = globals().get("CPL_BOM",   globals().get("CPA_BOM",   5.0))
     _cpl_medio = globals().get("CPL_MEDIO", globals().get("CPA_MEDIO", 10.0))
     for k,v in [("LANCAMENTO_COD",f"'{LANCAMENTO_COD}'"),("NOME_CLIENTE",f"'{NOME_CLIENTE}'"),
@@ -793,6 +866,13 @@ def main():
         seo_daily={"days":[],"impressions":[],"clicks":[]}
         seo_kw=[]; seo_pages=[]; seo_countries=[]
 
+    print("\n[LINKEDIN ADS]")
+    try:
+        li_daily,li_kpis,li_camps=load_linkedin()
+    except Exception as e:
+        print(f"  Aviso LinkedIn: {e}")
+        li_daily,li_kpis,li_camps=None,None,None
+
     print("\n[METABASE]")
     try:
         mb_data=load_metabase()
@@ -814,9 +894,10 @@ def main():
         print(f"  ERRO: {TEMPLATE_FILE} não encontrado"); return
     html=inject_all(TEMPLATE_FILE,m_k,m_d,m_dc,m_raw,m_t,m_bd,m_month,pes,
                     g_daily,g_kpis,g_camps,g_kw,g_bd,g_month,g_raw,
-                    seo_daily,seo_kw,seo_pages,seo_countries,mb_data)
+                    seo_daily,seo_kw,seo_pages,seo_countries,mb_data,
+                    li_daily,li_kpis,li_camps)
     # Diagnóstico — verificar se constantes foram injetadas
-    checks = ["GOOGLE_DAILY","GOOGLE_KPIS","GOOGLE_CAMPS","SEO_DAILY","META_MONTHLY","METABASE_DATA"]
+    checks = ["GOOGLE_DAILY","GOOGLE_KPIS","GOOGLE_CAMPS","SEO_DAILY","META_MONTHLY","METABASE_DATA","LI_KPIS"]
     for c in checks:
         idx = html.find(f"const {c} =")
         snippet = html[idx+len(f"const {c} ="):idx+len(f"const {c} =")+30] if idx>=0 else "NÃO ENCONTRADO"
