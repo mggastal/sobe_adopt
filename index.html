@@ -277,7 +277,7 @@ details.desk-only{display:block!important;}
   <div class="sb-section">
     <div class="sb-platform-group">
       <div class="sb-platform-hd">
-        <div class="sb-platform-icon" style="background:linear-gradient(135deg,#1877f2,#42a5f5)">f</div>
+        <div class="sb-platform-icon" style="background:transparent;overflow:hidden;padding:0;"><img src="https://mggastal.github.io/sobe-template/metaads.png" style="width:100%;height:100%;object-fit:contain;display:block;" onerror="this.parentElement.style.background='#1877f2';this.outerHTML='f'"></div>
         <span class="sb-platform-lbl">Meta Ads</span>
       </div>
       <a href="#" class="sb-item active" id="sbMeta" onclick="goPage('meta',this);return false;"><span class="ico">📋</span>Geral</a>
@@ -286,7 +286,7 @@ details.desk-only{display:block!important;}
     </div>
     <div class="sb-platform-group" style="margin-top:8px">
       <div class="sb-platform-hd">
-        <div class="sb-platform-icon" style="background:linear-gradient(135deg,#fbbc04,#ea4335)">G</div>
+        <div class="sb-platform-icon" style="background:transparent;overflow:hidden;padding:0;"><img src="https://mggastal.github.io/sobe-template/googleads.png" style="width:100%;height:100%;object-fit:contain;display:block;" onerror="this.parentElement.style.background='#ea4335';this.outerHTML='G'"></div>
         <span class="sb-platform-lbl">Google Ads</span>
       </div>
       <a href="#" class="sb-item" id="sbGoogle" onclick="goPage('google',this);return false;"><span class="ico">📋</span>Geral</a>
@@ -295,7 +295,7 @@ details.desk-only{display:block!important;}
     </div>
     <div class="sb-platform-group" style="margin-top:8px" id="sbLinkedinGroup">
       <div class="sb-platform-hd">
-        <div class="sb-platform-icon" style="background:linear-gradient(135deg,#0a66c2,#4a9fe8)">in</div>
+        <div class="sb-platform-icon" style="background:transparent;overflow:hidden;padding:0;"><img src="https://mggastal.github.io/sobe-template/linkedin.png" style="width:100%;height:100%;object-fit:contain;display:block;" onerror="this.parentElement.style.background='#0a66c2';this.outerHTML='in'"></div>
         <span class="sb-platform-lbl">LinkedIn Ads</span>
       </div>
       <a href="#" class="sb-item" id="sbLinkedin" onclick="goPage('linkedin',this);return false;"><span class="ico">📣</span>Visão Geral</a>
@@ -1866,7 +1866,7 @@ function renderResumo(){
   const card=(nome,icone,corIcone,invHtml,linhas)=>`
     <div class="cc" style="display:flex;flex-direction:column;gap:8px">
       <div style="display:flex;align-items:center;gap:8px">
-        <div style="width:26px;height:26px;border-radius:7px;background:${corIcone};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800">${icone}</div>
+        ${/^https?:/.test(icone)?`<img src="${icone}" alt="" style="width:26px;height:26px;object-fit:contain;flex-shrink:0">`:`<div style="width:26px;height:26px;border-radius:7px;background:${corIcone};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800">${icone}</div>`}
         <div class="cc-t" style="margin:0">${nome}</div>
       </div>
       ${invHtml}
@@ -1885,7 +1885,7 @@ function renderResumo(){
   if(md){
     const sp=sum(md.spend), ld=sum(md.leads), imp=sum(md.impressions), eng=sum(md.engagement);
     const pv=rngAnt?applyRange(getMDraw(),rngAnt):null;
-    cards.push(card('Meta Ads','f','linear-gradient(135deg,#1877f2,#4a9ff5)',
+    cards.push(card('Meta Ads','https://mggastal.github.io/sobe-template/metaads.png','linear-gradient(135deg,#1877f2,#4a9ff5)',
       inv(fR(sp),deltaBadge(sp,pv?sum(pv.spend):null,'neutro')),
       [line('Leads',fN(ld)),line('CPL',ld>0?fR(sp/ld):'—'),
        line('Engajamentos',fN(eng)),line('Custo/Engajamento',eng>0?fR(sp/eng):'—'),
@@ -1896,7 +1896,7 @@ function renderResumo(){
     const gd=applyPeriod(GOOGLE_DAILY)||GOOGLE_DAILY;
     const sp=sum(gd.spend), cv=sum(gd.conversions), cl=sum(gd.clicks);
     const pv=rngAnt?applyRange(GOOGLE_DAILY,rngAnt):null;
-    cards.push(card('Google Ads','G','linear-gradient(135deg,#ea4335,#fbbc05)',
+    cards.push(card('Google Ads','https://mggastal.github.io/sobe-template/googleads.png','linear-gradient(135deg,#ea4335,#fbbc05)',
       inv(fD(sp),deltaBadge(sp,pv?sum(pv.spend):null,'neutro')),
       [line('Conversões',fN(Math.round(cv))),line('CPA',cv>0?fD(sp/cv):'—'),line('Cliques',fN(cl))]));
   }
@@ -1905,7 +1905,7 @@ function renderResumo(){
     const ld=applyPeriod(LI_DAILY)||LI_DAILY;
     const sp=sum(ld.spend), fo=sum(ld.follows), imp=sum(ld.impressions);
     const pv=rngAnt?applyRange(LI_DAILY,rngAnt):null;
-    cards.push(card('LinkedIn Ads','in','linear-gradient(135deg,#0a66c2,#4a9fe8)',
+    cards.push(card('LinkedIn Ads','https://mggastal.github.io/sobe-template/linkedin.png','linear-gradient(135deg,#0a66c2,#4a9fe8)',
       inv(fD(sp),deltaBadge(sp,pv?sum(pv.spend):null,'neutro')),
       [line('Seguidores',fN(fo)),line('Custo/Seguidor',fo>0?fD(sp/fo):'—'),line('Impressões',fN(imp))]));
   }
