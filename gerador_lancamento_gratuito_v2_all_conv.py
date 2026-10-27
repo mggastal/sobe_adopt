@@ -110,7 +110,7 @@ def load_meta():
     df=pd.read_csv(URL_META)
     df=df.rename(columns={
         "Date":"date","Campaign Name":"campaign","Adset Name":"adset",
-        "Ad Name":"ad","Thumbnail URL":"thumb",
+        "Ad Name":"ad","Thumbnail URL":"thumb","Status":"status",
         "Spend (Cost, Amount Spent)":"spend",
         "Impressions":"impressions",
         "Action Link Clicks":"link_clicks",
@@ -141,6 +141,25 @@ def calc_kpis(p):
         "cpl":   round(sp/ld,2) if ld>0 else None,
         "cpm":   round(sp/imp*1000,2) if imp>0 else None
     }
+
+# Status p/ bolinha verde (ativo) / cinza (pausado) — mesma regra dos dashs do template:
+# vale o status do último dia em que o item aparece; ACTIVE ganha se houver mistura
+_STATUS_PRIORITY={"ACTIVE":0,"WITH_ISSUES":1,"PAUSED":2,"ADSET_PAUSED":3,"CAMPAIGN_PAUSED":4,"ARCHIVED":5}
+def _pick_status(g):
+    g=g[g["status"].notna()&(g["status"]!="")&(g["status"]!="NAN")]
+    if g.empty: return ""
+    last=g[g["date"]==g["date"].max()]
+    sts=last["status"].unique().tolist()
+    if "ACTIVE" in sts: return "ACTIVE"
+    sts.sort(key=lambda x:_STATUS_PRIORITY.get(x,99)); return sts[0]
+
+def meta_status(df):
+    if "status" not in df.columns: return {"c":{},"a":{},"ad":{}}
+    d=df.copy(); d["status"]=d["status"].fillna("").astype(str).str.strip().str.upper()
+    j=lambda *k:"||".join(str(x) for x in k)
+    return {"c":{j(k):_pick_status(g) for k,g in d.groupby("campaign")},
+            "a":{j(*k):_pick_status(g) for k,g in d.groupby(["campaign","adset"])},
+            "ad":{j(*k):_pick_status(g) for k,g in d.groupby(["campaign","adset","ad"])}}
 
 def meta_kpis(df):
     return {"lct":calc_kpis(df[df["is_lct"]]),"all":calc_kpis(df)}
@@ -918,6 +937,7 @@ def main():
                     g_daily,g_kpis,g_camps,g_kw,g_bd,g_month,g_raw,
                     seo_daily,seo_kw,seo_pages,seo_countries,mb_data,
                     li_daily,li_kpis,li_camps)
+    html=replace_js_const(html,"META_STATUS", meta_status(df_meta))
     # Diagnóstico — verificar se constantes foram injetadas
     checks = ["GOOGLE_DAILY","GOOGLE_KPIS","GOOGLE_CAMPS","SEO_DAILY","META_MONTHLY","METABASE_DATA","LI_KPIS"]
     for c in checks:
